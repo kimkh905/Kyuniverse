@@ -21,7 +21,7 @@ function shuffleItems(items) {
 }
 
 export default function QuizScreen() {
-  const { flashcards, saveQuizResult } = useFlashcards();
+  const { flashcards, saveQuizResult, selectedQuizDifficulty } = useFlashcards();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [sessionResults, setSessionResults] = useState([]);
@@ -30,6 +30,17 @@ export default function QuizScreen() {
 
   const currentCard = flashcards[currentIndex];
   const isFinished = currentIndex >= flashcards.length;
+  const optionCount = useMemo(() => {
+    if (selectedQuizDifficulty === 'Hard') {
+      return 6;
+    }
+
+    if (selectedQuizDifficulty === 'Medium') {
+      return 4;
+    }
+
+    return 3;
+  }, [selectedQuizDifficulty]);
 
   const options = useMemo(() => {
     if (!currentCard) {
@@ -40,10 +51,10 @@ export default function QuizScreen() {
       flashcards
         .filter((card) => card.id !== currentCard.id)
         .map((card) => card.english)
-    ).slice(0, 3);
+    ).slice(0, Math.max(optionCount - 1, 1));
 
     return shuffleItems([currentCard.english, ...incorrectAnswers]);
-  }, [currentCard, flashcards]);
+  }, [currentCard, flashcards, optionCount]);
 
   useEffect(() => {
     fadeAnim.setValue(0);
@@ -132,6 +143,7 @@ export default function QuizScreen() {
       <Text style={styles.progress}>
         Question {currentIndex + 1} / {flashcards.length}
       </Text>
+      <Text style={styles.difficultyBadge}>{selectedQuizDifficulty} mode</Text>
       <Text style={styles.title}>Pick the best match</Text>
       <Animated.View
         style={{
@@ -181,6 +193,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSoft,
     marginBottom: 10,
+  },
+  difficultyBadge: {
+    alignSelf: 'flex-start',
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.secondaryDark,
+    backgroundColor: colors.secondary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginBottom: 14,
   },
   subtitle: {
     fontSize: 16,

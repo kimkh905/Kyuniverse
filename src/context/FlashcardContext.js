@@ -5,6 +5,7 @@ import { flashcards, levels } from '../data/flashcards';
 const FlashcardContext = createContext(null);
 const STORAGE_KEY = 'flashcard-progress';
 const DEFAULT_DAILY_GOAL = 5;
+const quizDifficulties = ['Easy', 'Medium', 'Hard'];
 
 function getTodayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -37,6 +38,7 @@ export function FlashcardProvider({ children }) {
   const [knownCardIds, setKnownCardIds] = useState([]);
   const [quizResults, setQuizResults] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState('All');
+  const [selectedQuizDifficulty, setSelectedQuizDifficulty] = useState('Easy');
   const [dailyGoal] = useState(DEFAULT_DAILY_GOAL);
   const [activityByDate, setActivityByDate] = useState({});
   const [isHydrated, setIsHydrated] = useState(false);
@@ -64,6 +66,13 @@ export function FlashcardProvider({ children }) {
 
         if (typeof parsedProgress.selectedLevel === 'string') {
           setSelectedLevel(parsedProgress.selectedLevel);
+        }
+
+        if (
+          typeof parsedProgress.selectedQuizDifficulty === 'string' &&
+          quizDifficulties.includes(parsedProgress.selectedQuizDifficulty)
+        ) {
+          setSelectedQuizDifficulty(parsedProgress.selectedQuizDifficulty);
         }
 
         if (
@@ -102,6 +111,7 @@ export function FlashcardProvider({ children }) {
             knownCardIds,
             quizResults,
             selectedLevel,
+            selectedQuizDifficulty,
             activityByDate,
           })
         );
@@ -111,7 +121,14 @@ export function FlashcardProvider({ children }) {
     };
 
     persistProgress();
-  }, [activityByDate, isHydrated, knownCardIds, quizResults, selectedLevel]);
+  }, [
+    activityByDate,
+    isHydrated,
+    knownCardIds,
+    quizResults,
+    selectedLevel,
+    selectedQuizDifficulty,
+  ]);
 
   const filteredFlashcards =
     selectedLevel === 'All'
@@ -158,6 +175,10 @@ export function FlashcardProvider({ children }) {
     setSelectedLevel(level);
   };
 
+  const changeQuizDifficulty = (difficulty) => {
+    setSelectedQuizDifficulty(difficulty);
+  };
+
   const todayKey = getTodayKey();
   const todayProgress = activityByDate[todayKey] ?? 0;
   const dailyGoalProgress = Math.min(todayProgress, dailyGoal);
@@ -170,6 +191,8 @@ export function FlashcardProvider({ children }) {
       allFlashcards: flashcards,
       levels,
       selectedLevel,
+      quizDifficulties,
+      selectedQuizDifficulty,
       knownCardIds,
       quizResults,
       levelKnownCount,
@@ -183,6 +206,7 @@ export function FlashcardProvider({ children }) {
       saveQuizResult,
       resetProgress,
       changeLevel,
+      changeQuizDifficulty,
     }),
     [
       dailyGoal,
@@ -193,6 +217,7 @@ export function FlashcardProvider({ children }) {
       knownCardIds,
       levelKnownCount,
       quizResults,
+      selectedQuizDifficulty,
       selectedLevel,
       streakCount,
       todayProgress,

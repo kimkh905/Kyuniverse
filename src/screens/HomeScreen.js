@@ -11,6 +11,9 @@ export default function HomeScreen({ navigation }) {
     levels,
     selectedLevel,
     changeLevel,
+    quizDifficulties,
+    selectedQuizDifficulty,
+    changeQuizDifficulty,
     knownCardIds,
     quizResults,
     dailyGoal,
@@ -117,6 +120,32 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
+        <View style={styles.levelSection}>
+          <Text style={styles.levelTitle}>Quiz difficulty</Text>
+          <View style={styles.levelList}>
+            {quizDifficulties.map((difficulty) => (
+              <Pressable
+                key={difficulty}
+                onPress={() => changeQuizDifficulty(difficulty)}
+                style={({ pressed }) => [
+                  styles.levelChip,
+                  selectedQuizDifficulty === difficulty && styles.levelChipActive,
+                  pressed && styles.levelChipPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.levelChipLabel,
+                    selectedQuizDifficulty === difficulty && styles.levelChipLabelActive,
+                  ]}
+                >
+                  {difficulty}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
         <View style={styles.gameBoard}>
           <Pressable
             style={[styles.featureCard, styles.featurePrimary]}
@@ -132,7 +161,9 @@ export default function HomeScreen({ navigation }) {
           >
             <Text style={styles.featureEyebrow}>Challenge</Text>
             <Text style={styles.featureTitle}>Take Quiz</Text>
-            <Text style={styles.featureText}>Friendly questions with encouraging feedback.</Text>
+            <Text style={styles.featureText}>
+              Friendly questions with encouraging feedback on {selectedQuizDifficulty.toLowerCase()} mode.
+            </Text>
           </Pressable>
         </View>
 
