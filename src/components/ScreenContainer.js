@@ -1,0 +1,26 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View } from 'react-native';
+
+export default function ScreenContainer({ children, scroll = true }) {
+  const content = <View style={styles.content}>{children}</View>;
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['bottom', 'left', 'right']}>
+      {scroll ? <ScrollView contentContainerStyle={styles.scroll}>{content}</ScrollView> : content}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f7f8fc',
+  },
+  scroll: {
+    flexGrow: 1,
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+});

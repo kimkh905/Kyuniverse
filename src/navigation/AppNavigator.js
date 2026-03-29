@@ -1,0 +1,27 @@
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import FlashcardScreen from '../screens/FlashcardScreen';
+import HomeScreen from '../screens/HomeScreen';
+import ProgressScreen from '../screens/ProgressScreen';
+import QuizScreen from '../screens/QuizScreen';
+
+const Stack = createNativeStackNavigator();
+
+export default function AppNavigator() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Home"
+        screenOptions={{
+          headerTitleAlign: 'center',
+          contentStyle: { backgroundColor: '#f7f8fc' },
+        }}
+      >
+        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Korean Flashcards' }} />
+        <Stack.Screen name="Flashcards" component={FlashcardScreen} options={{ title: 'Flashcards' }} />
+        <Stack.Screen name="Quiz" component={QuizScreen} options={{ title: 'Quiz' }} />
+        <Stack.Screen name="Progress" component={ProgressScreen} options={{ title: 'Progress' }} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
