@@ -6,8 +6,17 @@ import { useFlashcards } from '../context/FlashcardContext';
 import colors from '../theme/colors';
 
 export default function HomeScreen({ navigation }) {
-  const { flashcards, levels, selectedLevel, changeLevel, knownCardIds, quizResults } =
-    useFlashcards();
+  const {
+    flashcards,
+    levels,
+    selectedLevel,
+    changeLevel,
+    knownCardIds,
+    quizResults,
+    dailyGoal,
+    todayProgress,
+    streakCount,
+  } = useFlashcards();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(18)).current;
   const correctCount = quizResults.filter(Boolean).length;
@@ -60,6 +69,19 @@ export default function HomeScreen({ navigation }) {
           <View style={[styles.statBubble, styles.statBubbleLavender]}>
             <Text style={styles.statValue}>{correctCount}</Text>
             <Text style={styles.statLabel}>Quiz wins</Text>
+          </View>
+        </View>
+
+        <View style={styles.goalRow}>
+          <View style={[styles.goalCard, styles.goalCardPeach]}>
+            <Text style={styles.goalValue}>
+              {todayProgress}/{dailyGoal}
+            </Text>
+            <Text style={styles.goalLabel}>Today&apos;s goal</Text>
+          </View>
+          <View style={[styles.goalCard, styles.goalCardYellow]}>
+            <Text style={styles.goalValue}>{streakCount}</Text>
+            <Text style={styles.goalLabel}>Day streak</Text>
           </View>
         </View>
 
@@ -189,6 +211,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSoft,
     lineHeight: 18,
+  },
+  goalRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 22,
+  },
+  goalCard: {
+    flex: 1,
+    borderRadius: 22,
+    padding: 18,
+  },
+  goalCardPeach: {
+    backgroundColor: '#ffe0d1',
+  },
+  goalCardYellow: {
+    backgroundColor: '#fff0b8',
+  },
+  goalValue: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  goalLabel: {
+    fontSize: 13,
+    color: colors.textSoft,
   },
   card: {
     backgroundColor: colors.card,

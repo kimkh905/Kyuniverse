@@ -4,6 +4,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import ScreenContainer from '../components/ScreenContainer';
 import { useFlashcards } from '../context/FlashcardContext';
 import colors from '../theme/colors';
+import { speakText } from '../utils/pronunciation';
 
 function shuffleItems(items) {
   const shuffledItems = [...items];
@@ -92,6 +93,14 @@ export default function QuizScreen() {
     setSessionResults([]);
   };
 
+  const handleSpeakKorean = () => {
+    speakText(currentCard.korean, 'ko-KR');
+  };
+
+  const handleSpeakEnglish = () => {
+    speakText(currentCard.english, 'en-US');
+  };
+
   const sessionCorrectCount = sessionResults.filter(Boolean).length;
   const sessionAccuracy = sessionResults.length
     ? Math.round((sessionCorrectCount / sessionResults.length) * 100)
@@ -132,6 +141,9 @@ export default function QuizScreen() {
       >
         <View style={styles.promptCard}>
           <Text style={styles.promptText}>{currentCard.korean}</Text>
+          <View style={styles.promptActions}>
+            <PrimaryButton title="Hear Korean" variant="secondary" onPress={handleSpeakKorean} />
+          </View>
         </View>
       </Animated.View>
 
@@ -146,7 +158,14 @@ export default function QuizScreen() {
         ))}
       </View>
 
-      {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
+      {feedback ? (
+        <View>
+          <Text style={styles.feedback}>{feedback}</Text>
+          <View style={styles.feedbackAction}>
+            <PrimaryButton title="Hear Answer" variant="secondary" onPress={handleSpeakEnglish} />
+          </View>
+        </View>
+      ) : null}
     </ScreenContainer>
   );
 }
@@ -204,6 +223,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
+  promptActions: {
+    width: '100%',
+    marginTop: 18,
+  },
   options: {
     marginBottom: 20,
   },
@@ -216,6 +239,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 14,
+  },
+  feedbackAction: {
+    marginTop: 10,
   },
   centered: {
     flex: 1,

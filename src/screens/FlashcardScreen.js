@@ -4,6 +4,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import ScreenContainer from '../components/ScreenContainer';
 import { useFlashcards } from '../context/FlashcardContext';
 import colors from '../theme/colors';
+import { speakText } from '../utils/pronunciation';
 
 function createDefaultOrder(length) {
   return Array.from({ length }, (_, index) => index);
@@ -89,6 +90,15 @@ export default function FlashcardScreen() {
     setIsShuffled(true);
   };
 
+  const handleSpeakCurrent = () => {
+    if (showEnglish) {
+      speakText(currentCard.english, 'en-US');
+      return;
+    }
+
+    speakText(currentCard.korean, 'ko-KR');
+  };
+
   return (
     <ScreenContainer scroll={false}>
       <View style={styles.headerRow}>
@@ -112,6 +122,9 @@ export default function FlashcardScreen() {
           <Text style={styles.direction}>{showEnglish ? 'English' : 'Korean'}</Text>
           <Text style={styles.word}>{showEnglish ? currentCard.english : currentCard.korean}</Text>
           <Text style={styles.hint}>Tap to flip and keep going</Text>
+          <Pressable onPress={handleSpeakCurrent} style={styles.speakButton}>
+            <Text style={styles.speakLabel}>Hear it</Text>
+          </Pressable>
         </Pressable>
       </Animated.View>
 
@@ -192,6 +205,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primaryDark,
     textAlign: 'center',
+  },
+  speakButton: {
+    marginTop: 16,
+    borderRadius: 999,
+    backgroundColor: colors.secondary,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  speakLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.secondaryDark,
   },
   navigationRow: {
     flexDirection: 'row',
