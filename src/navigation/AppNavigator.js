@@ -4,6 +4,7 @@ import FlashcardScreen from '../screens/FlashcardScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 import QuizScreen from '../screens/QuizScreen';
+import colors from '../theme/colors';
 
 const Stack = createNativeStackNavigator();
 
@@ -14,7 +15,14 @@ export default function AppNavigator() {
         initialRouteName="Home"
         screenOptions={{
           headerTitleAlign: 'center',
-          contentStyle: { backgroundColor: '#f7f8fc' },
+          contentStyle: { backgroundColor: colors.background },
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
+          headerTitleStyle: {
+            color: colors.text,
+            fontWeight: '700',
+          },
         }}
       >
         <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Korean Flashcards' }} />

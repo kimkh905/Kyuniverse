@@ -2,17 +2,24 @@ import { StyleSheet, Text, View } from 'react-native';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenContainer from '../components/ScreenContainer';
 import { useFlashcards } from '../context/FlashcardContext';
+import colors from '../theme/colors';
 
 export default function ProgressScreen() {
-  const { flashcards, knownCardIds, quizResults, resetProgress } = useFlashcards();
+  const { flashcards, knownCardIds, quizResults, resetProgress, selectedLevel, levelKnownCount } =
+    useFlashcards();
 
-  const knownCount = knownCardIds.length;
+  const knownCount = selectedLevel === 'All' ? knownCardIds.length : levelKnownCount;
   const correctCount = quizResults.filter(Boolean).length;
   const accuracy = quizResults.length ? Math.round((correctCount / quizResults.length) * 100) : 0;
 
   return (
     <ScreenContainer>
       <Text style={styles.title}>Your Progress</Text>
+      <Text style={styles.subtitle}>Current level: {selectedLevel}</Text>
+      <View style={styles.cheerCard}>
+        <Text style={styles.cheerTitle}>You are building this little by little</Text>
+        <Text style={styles.cheerText}>Even a few cards a day adds up faster than it feels.</Text>
+      </View>
 
       <View style={styles.grid}>
         <View style={styles.statCard}>
@@ -42,26 +49,50 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
     marginBottom: 20,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: colors.textSoft,
+    marginBottom: 16,
   },
   grid: {
     gap: 12,
     marginBottom: 20,
   },
+  cheerCard: {
+    backgroundColor: colors.secondary,
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 16,
+  },
+  cheerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.secondaryDark,
+    marginBottom: 6,
+  },
+  cheerText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.secondaryDark,
+  },
   statCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
+    backgroundColor: colors.card,
+    borderRadius: 22,
     padding: 20,
+    borderWidth: 2,
+    borderColor: colors.backgroundAccent,
   },
   statValue: {
     fontSize: 30,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.primaryDark,
     marginBottom: 6,
   },
   statLabel: {
     fontSize: 14,
-    color: '#64748b',
+    color: colors.textSoft,
   },
 });

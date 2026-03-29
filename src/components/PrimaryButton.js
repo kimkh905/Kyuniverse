@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
+import colors from '../theme/colors';
 
 export default function PrimaryButton({ title, onPress, variant = 'primary' }) {
   return (
@@ -24,27 +25,32 @@ export default function PrimaryButton({ title, onPress, variant = 'primary' }) {
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 14,
+    borderRadius: 18,
     paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingVertical: 15,
     marginBottom: 12,
     alignItems: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 2,
   },
   primaryButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.primary,
   },
   secondaryButton: {
-    backgroundColor: '#e2e8f0',
+    backgroundColor: colors.cardAlt,
   },
   label: {
     fontSize: 16,
     fontWeight: '600',
   },
   primaryLabel: {
-    color: '#ffffff',
+    color: colors.white,
   },
   secondaryLabel: {
-    color: '#0f172a',
+    color: colors.text,
   },
   pressed: {
     opacity: 0.85,

@@ -1,5 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import colors from '../theme/colors';
 
 export default function ScreenContainer({ children, scroll = true }) {
   const content = <View style={styles.content}>{children}</View>;
@@ -14,7 +15,7 @@ export default function ScreenContainer({ children, scroll = true }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f7f8fc',
+    backgroundColor: colors.background,
   },
   scroll: {
     flexGrow: 1,

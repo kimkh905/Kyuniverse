@@ -1,11 +1,87 @@
-import { createContext, useContext, useMemo, useState } from 'react';
-import { flashcards } from '../data/flashcards';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { flashcards, levels } from '../data/flashcards';
 
 const FlashcardContext = createContext(null);
+const STORAGE_KEY = 'flashcard-progress';
 
 export function FlashcardProvider({ children }) {
   const [knownCardIds, setKnownCardIds] = useState([]);
   const [quizResults, setQuizResults] = useState([]);
+  const [selectedLevel, setSelectedLevel] = useState('All');
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProgress = async () => {
+      try {
+        const savedProgress = await AsyncStorage.getItem(STORAGE_KEY);
+
+        if (!savedProgress || !isMounted) {
+          return;
+        }
+
+        const parsedProgress = JSON.parse(savedProgress);
+
+        if (Array.isArray(parsedProgress.knownCardIds)) {
+          setKnownCardIds(parsedProgress.knownCardIds);
+        }
+
+        if (Array.isArray(parsedProgress.quizResults)) {
+          setQuizResults(parsedProgress.quizResults);
+        }
+
+        if (typeof parsedProgress.selectedLevel === 'string') {
+          setSelectedLevel(parsedProgress.selectedLevel);
+        }
+      } catch (error) {
+        console.warn('Failed to load flashcard progress', error);
+      } finally {
+        if (isMounted) {
+          setIsHydrated(true);
+        }
+      }
+    };
+
+    loadProgress();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    const persistProgress = async () => {
+      try {
+        await AsyncStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            knownCardIds,
+            quizResults,
+            selectedLevel,
+          })
+        );
+      } catch (error) {
+        console.warn('Failed to save flashcard progress', error);
+      }
+    };
+
+    persistProgress();
+  }, [isHydrated, knownCardIds, quizResults, selectedLevel]);
+
+  const filteredFlashcards =
+    selectedLevel === 'All'
+      ? flashcards
+      : flashcards.filter((card) => card.level === selectedLevel);
+
+  const levelKnownCount = filteredFlashcards.filter((card) =>
+    knownCardIds.includes(card.id)
+  ).length;
 
   const markCardKnown = (cardId) => {
     setKnownCardIds((currentIds) => {
@@ -26,16 +102,26 @@ export function FlashcardProvider({ children }) {
     setQuizResults([]);
   };
 
+  const changeLevel = (level) => {
+    setSelectedLevel(level);
+  };
+
   const value = useMemo(
     () => ({
-      flashcards,
+      flashcards: filteredFlashcards,
+      allFlashcards: flashcards,
+      levels,
+      selectedLevel,
       knownCardIds,
       quizResults,
+      levelKnownCount,
+      isHydrated,
       markCardKnown,
       saveQuizResult,
       resetProgress,
+      changeLevel,
     }),
-    [knownCardIds, quizResults]
+    [filteredFlashcards, isHydrated, knownCardIds, levelKnownCount, quizResults, selectedLevel]
   );
 
   return (
