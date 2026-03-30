@@ -36,6 +36,7 @@ function calculateStreak(activityByDate) {
 
 export function FlashcardProvider({ children }) {
   const [knownCardIds, setKnownCardIds] = useState([]);
+  const [favoriteCardIds, setFavoriteCardIds] = useState([]);
   const [quizResults, setQuizResults] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState('All');
   const [selectedPartOfSpeech, setSelectedPartOfSpeech] = useState('All');
@@ -60,6 +61,10 @@ export function FlashcardProvider({ children }) {
 
         if (Array.isArray(parsedProgress.knownCardIds)) {
           setKnownCardIds(parsedProgress.knownCardIds);
+        }
+
+        if (Array.isArray(parsedProgress.favoriteCardIds)) {
+          setFavoriteCardIds(parsedProgress.favoriteCardIds);
         }
 
         if (Array.isArray(parsedProgress.quizResults)) {
@@ -122,6 +127,7 @@ export function FlashcardProvider({ children }) {
           STORAGE_KEY,
           JSON.stringify({
             knownCardIds,
+            favoriteCardIds,
             quizResults,
             selectedLevel,
             selectedPartOfSpeech,
@@ -138,6 +144,7 @@ export function FlashcardProvider({ children }) {
     persistProgress();
   }, [
     activityByDate,
+    favoriteCardIds,
     isHydrated,
     knownCardIds,
     quizResults,
@@ -163,6 +170,7 @@ export function FlashcardProvider({ children }) {
       : filteredFlashcards;
 
   const levelKnownCount = filteredFlashcards.filter((card) => knownCardIds.includes(card.id)).length;
+  const favoriteCount = filteredFlashcards.filter((card) => favoriteCardIds.includes(card.id)).length;
 
   const trackDailyActivity = () => {
     const todayKey = getTodayKey();
@@ -190,8 +198,17 @@ export function FlashcardProvider({ children }) {
     setQuizResults((currentResults) => [...currentResults, isCorrect]);
   };
 
+  const toggleFavoriteCard = (cardId) => {
+    setFavoriteCardIds((currentIds) =>
+      currentIds.includes(cardId)
+        ? currentIds.filter((currentId) => currentId !== cardId)
+        : [...currentIds, cardId]
+    );
+  };
+
   const resetProgress = () => {
     setKnownCardIds([]);
+    setFavoriteCardIds([]);
     setQuizResults([]);
     setActivityByDate({});
   };
@@ -232,6 +249,8 @@ export function FlashcardProvider({ children }) {
       quizScopes,
       selectedQuizScope,
       knownCardIds,
+      favoriteCardIds,
+      favoriteCount,
       quizResults,
       levelKnownCount,
       dailyGoal,
@@ -241,6 +260,7 @@ export function FlashcardProvider({ children }) {
       isDailyGoalComplete,
       isHydrated,
       markCardKnown,
+      toggleFavoriteCard,
       saveQuizResult,
       resetProgress,
       changeLevel,
@@ -252,6 +272,8 @@ export function FlashcardProvider({ children }) {
       dailyGoal,
       dailyGoalProgress,
       filteredFlashcards,
+      favoriteCardIds,
+      favoriteCount,
       isDailyGoalComplete,
       isHydrated,
       knownCardIds,

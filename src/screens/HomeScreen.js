@@ -21,6 +21,7 @@ export default function HomeScreen({ navigation }) {
     selectedQuizScope,
     changeQuizScope,
     knownCardIds,
+    favoriteCount,
     quizResults,
     dailyGoal,
     todayProgress,
@@ -79,6 +80,14 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.statValue}>{correctCount}</Text>
             <Text style={styles.statLabel}>Quiz wins</Text>
           </View>
+        </View>
+
+        <View style={styles.favoriteCard}>
+          <Text style={styles.favoriteCardTitle}>Saved for later review</Text>
+          <Text style={styles.favoriteCardValue}>{favoriteCount}</Text>
+          <Text style={styles.favoriteCardText}>
+            Bookmark tricky words in flashcards, then switch on favorites-only review.
+          </Text>
         </View>
 
         <View style={styles.goalRow}>
@@ -317,6 +326,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginBottom: 22,
+  },
+  favoriteCard: {
+    backgroundColor: '#ffe9f2',
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 22,
+  },
+  favoriteCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  favoriteCardValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.primaryDark,
+    marginBottom: 6,
+  },
+  favoriteCardText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSoft,
   },
   goalCard: {
     flex: 1,

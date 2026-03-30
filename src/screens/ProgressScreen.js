@@ -13,6 +13,8 @@ export default function ProgressScreen() {
     selectedLevel,
     selectedPartOfSpeech,
     levelKnownCount,
+    favoriteCardIds,
+    favoriteCount,
     dailyGoal,
     todayProgress,
     dailyGoalProgress,
@@ -80,6 +82,14 @@ export default function ProgressScreen() {
         <View style={styles.statCard}>
           <Text style={styles.statValue}>{correctCount}</Text>
           <Text style={styles.statLabel}>Correct answers</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>
+            {selectedLevel === 'All' && selectedPartOfSpeech === 'All'
+              ? favoriteCardIds.length
+              : favoriteCount}
+          </Text>
+          <Text style={styles.statLabel}>Bookmarked words</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statValue}>{accuracy}%</Text>

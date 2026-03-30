@@ -25,8 +25,10 @@ function createShuffledOrder(length, pinnedIndex) {
 }
 
 export default function FlashcardScreen() {
-  const { flashcards, markCardKnown, selectedPartOfSpeech } = useFlashcards();
+  const { flashcards, markCardKnown, favoriteCardIds, toggleFavoriteCard, selectedPartOfSpeech } =
+    useFlashcards();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showEnglish, setShowEnglish] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
@@ -36,22 +38,27 @@ export default function FlashcardScreen() {
 
   const filteredCards = useMemo(() => {
     if (!normalizedQuery) {
-      return flashcards;
+      return showFavoritesOnly
+        ? flashcards.filter((card) => favoriteCardIds.includes(card.id))
+        : flashcards;
     }
 
-    return flashcards.filter(
-      (card) =>
-        card.korean.includes(searchQuery.trim()) ||
-        card.english.toLowerCase().includes(normalizedQuery) ||
-        card.partOfSpeech.toLowerCase().includes(normalizedQuery)
-    );
-  }, [flashcards, normalizedQuery, searchQuery]);
+    return flashcards
+      .filter((card) => !showFavoritesOnly || favoriteCardIds.includes(card.id))
+      .filter(
+        (card) =>
+          card.korean.includes(searchQuery.trim()) ||
+          card.english.toLowerCase().includes(normalizedQuery) ||
+          card.partOfSpeech.toLowerCase().includes(normalizedQuery)
+      );
+  }, [favoriteCardIds, flashcards, normalizedQuery, searchQuery, showFavoritesOnly]);
 
   const [cardOrder, setCardOrder] = useState(() => createDefaultOrder(filteredCards.length));
 
   const activeCardIndex = cardOrder[currentIndex];
   const currentCard = filteredCards[activeCardIndex];
   const isLastCard = currentIndex === cardOrder.length - 1;
+  const isFavorite = currentCard ? favoriteCardIds.includes(currentCard.id) : false;
 
   const progressLabel = useMemo(
     () => `${currentIndex + 1} / ${cardOrder.length}`,
@@ -197,6 +204,25 @@ export default function FlashcardScreen() {
             </Pressable>
           ) : null}
         </View>
+        <View style={styles.filterRow}>
+          <Pressable
+            onPress={() => setShowFavoritesOnly((current) => !current)}
+            style={({ pressed }) => [
+              styles.favoriteFilterChip,
+              showFavoritesOnly && styles.favoriteFilterChipActive,
+              pressed && styles.controlPressed,
+            ]}
+          >
+            <Text
+              style={[
+                styles.favoriteFilterLabel,
+                showFavoritesOnly && styles.favoriteFilterLabelActive,
+              ]}
+            >
+              {showFavoritesOnly ? 'Favorites Only On' : 'Favorites Only'}
+            </Text>
+          </Pressable>
+        </View>
         <Text style={styles.searchMeta}>
           {filteredCards.length} card{filteredCards.length === 1 ? '' : 's'} ready in {selectedPartOfSpeech}.
         </Text>
@@ -224,6 +250,18 @@ export default function FlashcardScreen() {
 
       <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
         <Pressable style={styles.card} onPress={() => setShowEnglish((current) => !current)}>
+          <Pressable
+            onPress={() => toggleFavoriteCard(currentCard.id)}
+            style={({ pressed }) => [
+              styles.favoriteButton,
+              isFavorite && styles.favoriteButtonActive,
+              pressed && styles.controlPressed,
+            ]}
+          >
+            <Text style={[styles.favoriteButtonLabel, isFavorite && styles.favoriteButtonLabelActive]}>
+              {isFavorite ? 'Bookmarked' : 'Bookmark'}
+            </Text>
+          </Pressable>
           <Text style={styles.direction}>{showEnglish ? 'English' : 'Korean'}</Text>
           <Text style={styles.word}>{showEnglish ? currentCard.english : currentCard.korean}</Text>
           <Text style={styles.hint}>Tap to flip and keep going</Text>
@@ -328,6 +366,30 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSoft,
   },
+  filterRow: {
+    flexDirection: 'row',
+    marginTop: 12,
+  },
+  favoriteFilterChip: {
+    borderRadius: 999,
+    backgroundColor: colors.white,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.backgroundAccent,
+  },
+  favoriteFilterChipActive: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.secondary,
+  },
+  favoriteFilterLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  favoriteFilterLabelActive: {
+    color: colors.secondaryDark,
+  },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -376,6 +438,27 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 2,
     borderColor: colors.backgroundAccent,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 18,
+    right: 18,
+    borderRadius: 999,
+    backgroundColor: colors.cardAlt,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    zIndex: 1,
+  },
+  favoriteButtonActive: {
+    backgroundColor: colors.secondary,
+  },
+  favoriteButtonLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  favoriteButtonLabelActive: {
+    color: colors.secondaryDark,
   },
   direction: {
     fontSize: 16,
