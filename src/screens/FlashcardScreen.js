@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenContainer from '../components/ScreenContainer';
 import { useFlashcards } from '../context/FlashcardContext';
@@ -26,15 +26,31 @@ function createShuffledOrder(length, pinnedIndex) {
 
 export default function FlashcardScreen() {
   const { flashcards, markCardKnown, selectedPartOfSpeech } = useFlashcards();
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showEnglish, setShowEnglish] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
-  const [cardOrder, setCardOrder] = useState(() => createDefaultOrder(flashcards.length));
   const scaleAnim = useRef(new Animated.Value(0.96)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const filteredCards = useMemo(() => {
+    if (!normalizedQuery) {
+      return flashcards;
+    }
+
+    return flashcards.filter(
+      (card) =>
+        card.korean.includes(searchQuery.trim()) ||
+        card.english.toLowerCase().includes(normalizedQuery) ||
+        card.partOfSpeech.toLowerCase().includes(normalizedQuery)
+    );
+  }, [flashcards, normalizedQuery, searchQuery]);
+
+  const [cardOrder, setCardOrder] = useState(() => createDefaultOrder(filteredCards.length));
 
   const activeCardIndex = cardOrder[currentIndex];
-  const currentCard = flashcards[activeCardIndex];
+  const currentCard = filteredCards[activeCardIndex];
   const isLastCard = currentIndex === cardOrder.length - 1;
 
   const progressLabel = useMemo(
@@ -43,11 +59,30 @@ export default function FlashcardScreen() {
   );
 
   useEffect(() => {
+    const currentCardId = currentCard?.id;
+    const nextOrder = isShuffled
+      ? createShuffledOrder(filteredCards.length, 0)
+      : createDefaultOrder(filteredCards.length);
+
+    if (!filteredCards.length) {
+      setCurrentIndex(0);
+      setShowEnglish(false);
+      setCardOrder(nextOrder);
+      return;
+    }
+
+    const nextPinnedIndex = currentCardId
+      ? filteredCards.findIndex((card) => card.id === currentCardId)
+      : 0;
+
     setCurrentIndex(0);
     setShowEnglish(false);
-    setIsShuffled(false);
-    setCardOrder(createDefaultOrder(flashcards.length));
-  }, [flashcards]);
+    setCardOrder(
+      isShuffled
+        ? createShuffledOrder(filteredCards.length, Math.max(nextPinnedIndex, 0))
+        : createDefaultOrder(filteredCards.length)
+    );
+  }, [currentCard?.id, filteredCards, isShuffled]);
 
   useEffect(() => {
     fadeAnim.setValue(0);
@@ -86,13 +121,13 @@ export default function FlashcardScreen() {
     setShowEnglish(false);
 
     if (isShuffled) {
-      setCardOrder(createDefaultOrder(flashcards.length));
+      setCardOrder(createDefaultOrder(filteredCards.length));
       setCurrentIndex(activeCardIndex);
       setIsShuffled(false);
       return;
     }
 
-    setCardOrder(createShuffledOrder(flashcards.length, activeCardIndex));
+    setCardOrder(createShuffledOrder(filteredCards.length, activeCardIndex));
     setCurrentIndex(0);
     setIsShuffled(true);
   };
@@ -117,8 +152,56 @@ export default function FlashcardScreen() {
     );
   }
 
+  if (!filteredCards.length) {
+    return (
+      <ScreenContainer>
+        <View style={styles.searchPanel}>
+          <Text style={styles.searchLabel}>Search your current flashcards</Text>
+          <View style={styles.searchInputWrap}>
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Try Korean, English, or word type"
+              placeholderTextColor={colors.textSoft}
+              style={styles.searchInput}
+            />
+            <Pressable onPress={() => setSearchQuery('')} style={styles.clearButton}>
+              <Text style={styles.clearLabel}>Clear</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>No cards matched that search</Text>
+          <Text style={styles.emptyText}>Try a shorter word or clear the search to keep studying.</Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
   return (
     <ScreenContainer scroll={false}>
+      <View style={styles.searchPanel}>
+        <Text style={styles.searchLabel}>Search your current flashcards</Text>
+        <View style={styles.searchInputWrap}>
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Try Korean, English, or word type"
+            placeholderTextColor={colors.textSoft}
+            style={styles.searchInput}
+          />
+          {searchQuery ? (
+            <Pressable onPress={() => setSearchQuery('')} style={styles.clearButton}>
+              <Text style={styles.clearLabel}>Clear</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        <Text style={styles.searchMeta}>
+          {filteredCards.length} card{filteredCards.length === 1 ? '' : 's'} ready in {selectedPartOfSpeech}.
+        </Text>
+      </View>
+
       <View style={styles.headerRow}>
         <Text style={styles.progress}>{progressLabel}</Text>
         <Pressable
@@ -168,11 +251,83 @@ export default function FlashcardScreen() {
       <View style={styles.actions}>
         <PrimaryButton title="I Know This" onPress={handleMarkKnown} />
       </View>
+
+      <View style={styles.browserSection}>
+        <Text style={styles.browserTitle}>Jump to a word</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.browserRow}>
+          {filteredCards.map((card, index) => {
+            const isActive = index === activeCardIndex;
+
+            return (
+              <Pressable
+                key={card.id}
+                onPress={() => {
+                  setCurrentIndex(cardOrder.indexOf(index));
+                  setShowEnglish(false);
+                }}
+                style={({ pressed }) => [
+                  styles.wordChip,
+                  isActive && styles.wordChipActive,
+                  pressed && styles.controlPressed,
+                ]}
+              >
+                <Text style={[styles.wordChipLabel, isActive && styles.wordChipLabelActive]}>
+                  {card.korean}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  searchPanel: {
+    backgroundColor: colors.cardAlt,
+    borderRadius: 24,
+    padding: 16,
+    marginBottom: 14,
+  },
+  searchLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 10,
+  },
+  searchInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.backgroundAccent,
+  },
+  clearButton: {
+    borderRadius: 999,
+    backgroundColor: colors.lavender,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  clearLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  searchMeta: {
+    marginTop: 10,
+    fontSize: 13,
+    color: colors.textSoft,
+  },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -270,6 +425,39 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: 'auto',
+  },
+  browserSection: {
+    marginTop: 14,
+  },
+  browserTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 10,
+  },
+  browserRow: {
+    paddingRight: 6,
+    gap: 10,
+  },
+  wordChip: {
+    borderRadius: 999,
+    backgroundColor: colors.cardAlt,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.backgroundAccent,
+  },
+  wordChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  wordChipLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  wordChipLabelActive: {
+    color: colors.white,
   },
   controlPressed: {
     opacity: 0.85,
