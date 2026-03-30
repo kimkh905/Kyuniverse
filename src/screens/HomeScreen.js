@@ -1,13 +1,24 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenContainer from '../components/ScreenContainer';
 import { useFlashcards } from '../context/FlashcardContext';
 import colors from '../theme/colors';
+import { speakText } from '../utils/pronunciation';
+
+function getDayOfYear() {
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const diff = now - startOfYear;
+  const oneDay = 1000 * 60 * 60 * 24;
+
+  return Math.floor(diff / oneDay);
+}
 
 export default function HomeScreen({ navigation }) {
   const {
     flashcards,
+    allFlashcards,
     levels,
     selectedLevel,
     changeLevel,
@@ -30,6 +41,14 @@ export default function HomeScreen({ navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(18)).current;
   const correctCount = quizResults.filter(Boolean).length;
+  const dailyWord = useMemo(() => {
+    if (!allFlashcards.length) {
+      return null;
+    }
+
+    const dailyIndex = getDayOfYear() % allFlashcards.length;
+    return allFlashcards[dailyIndex];
+  }, [allFlashcards]);
 
   useEffect(() => {
     Animated.parallel([
@@ -81,6 +100,46 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.statLabel}>Quiz wins</Text>
           </View>
         </View>
+
+        {dailyWord ? (
+          <View style={styles.dailyWordCard}>
+            <View style={styles.dailyWordHeader}>
+              <View>
+                <Text style={styles.dailyWordEyebrow}>Word of the day</Text>
+                <Text style={styles.dailyWordType}>
+                  {dailyWord.level} - {dailyWord.partOfSpeech}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => speakText(dailyWord.korean, 'ko-KR')}
+                style={({ pressed }) => [styles.dailyWordAudioButton, pressed && styles.levelChipPressed]}
+              >
+                <Text style={styles.dailyWordAudioLabel}>Hear Korean</Text>
+              </Pressable>
+            </View>
+
+            <Text style={styles.dailyWordKorean}>{dailyWord.korean}</Text>
+            <Text style={styles.dailyWordEnglish}>{dailyWord.english}</Text>
+            <Text style={styles.dailyWordText}>
+              A tiny win for today: hear it, say it once, and try spotting it again later.
+            </Text>
+
+            <View style={styles.dailyWordActions}>
+              <Pressable
+                onPress={() => speakText(dailyWord.english, 'en-US')}
+                style={({ pressed }) => [styles.dailyWordSecondaryButton, pressed && styles.levelChipPressed]}
+              >
+                <Text style={styles.dailyWordSecondaryLabel}>Hear English</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => navigation.navigate('Flashcards')}
+                style={({ pressed }) => [styles.dailyWordPrimaryButton, pressed && styles.levelChipPressed]}
+              >
+                <Text style={styles.dailyWordPrimaryLabel}>Practice More</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.favoriteCard}>
           <Text style={styles.favoriteCardTitle}>Saved for later review</Text>
@@ -295,6 +354,88 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginBottom: 22,
+  },
+  dailyWordCard: {
+    backgroundColor: '#fff4d8',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 22,
+    borderWidth: 2,
+    borderColor: '#ffe1a3',
+  },
+  dailyWordHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 14,
+  },
+  dailyWordEyebrow: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.secondaryDark,
+    marginBottom: 4,
+  },
+  dailyWordType: {
+    fontSize: 13,
+    color: colors.textSoft,
+  },
+  dailyWordAudioButton: {
+    borderRadius: 999,
+    backgroundColor: colors.white,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  dailyWordAudioLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  dailyWordKorean: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 6,
+  },
+  dailyWordEnglish: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.primaryDark,
+    marginBottom: 10,
+  },
+  dailyWordText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSoft,
+  },
+  dailyWordActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 16,
+  },
+  dailyWordSecondaryButton: {
+    flex: 1,
+    borderRadius: 18,
+    backgroundColor: colors.card,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  dailyWordSecondaryLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  dailyWordPrimaryButton: {
+    flex: 1,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  dailyWordPrimaryLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.white,
   },
   statBubble: {
     flex: 1,
