@@ -11,9 +11,15 @@ export default function HomeScreen({ navigation }) {
     levels,
     selectedLevel,
     changeLevel,
+    partsOfSpeech,
+    selectedPartOfSpeech,
+    changePartOfSpeech,
     quizDifficulties,
     selectedQuizDifficulty,
     changeQuizDifficulty,
+    quizScopes,
+    selectedQuizScope,
+    changeQuizScope,
     knownCardIds,
     quizResults,
     dailyGoal,
@@ -80,7 +86,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.goalValue}>
               {todayProgress}/{dailyGoal}
             </Text>
-            <Text style={styles.goalLabel}>Today&apos;s goal</Text>
+            <Text style={styles.goalLabel}>Today's goal</Text>
           </View>
           <View style={[styles.goalCard, styles.goalCardYellow]}>
             <Text style={styles.goalValue}>{streakCount}</Text>
@@ -91,7 +97,11 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Current level</Text>
           <Text style={styles.cardValue}>{selectedLevel}</Text>
-          <Text style={styles.cardHint}>Switch levels any time and keep the mood light.</Text>
+          <Text style={styles.cardHint}>
+            {selectedPartOfSpeech === 'All'
+              ? 'All word types are active right now.'
+              : `${selectedPartOfSpeech}s are active right now.`}
+          </Text>
         </View>
 
         <View style={styles.levelSection}>
@@ -114,6 +124,32 @@ export default function HomeScreen({ navigation }) {
                   ]}
                 >
                   {level}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.levelSection}>
+          <Text style={styles.levelTitle}>Word type</Text>
+          <View style={styles.levelList}>
+            {partsOfSpeech.map((partOfSpeech) => (
+              <Pressable
+                key={partOfSpeech}
+                onPress={() => changePartOfSpeech(partOfSpeech)}
+                style={({ pressed }) => [
+                  styles.levelChip,
+                  selectedPartOfSpeech === partOfSpeech && styles.levelChipActive,
+                  pressed && styles.levelChipPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.levelChipLabel,
+                    selectedPartOfSpeech === partOfSpeech && styles.levelChipLabelActive,
+                  ]}
+                >
+                  {partOfSpeech}
                 </Text>
               </Pressable>
             ))}
@@ -146,6 +182,32 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
+        <View style={styles.levelSection}>
+          <Text style={styles.levelTitle}>Quiz source</Text>
+          <View style={styles.levelList}>
+            {quizScopes.map((scope) => (
+              <Pressable
+                key={scope}
+                onPress={() => changeQuizScope(scope)}
+                style={({ pressed }) => [
+                  styles.levelChip,
+                  selectedQuizScope === scope && styles.levelChipActive,
+                  pressed && styles.levelChipPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.levelChipLabel,
+                    selectedQuizScope === scope && styles.levelChipLabelActive,
+                  ]}
+                >
+                  {scope}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
         <View style={styles.gameBoard}>
           <Pressable
             style={[styles.featureCard, styles.featurePrimary]}
@@ -153,7 +215,13 @@ export default function HomeScreen({ navigation }) {
           >
             <Text style={styles.featureEyebrow}>Warm-up</Text>
             <Text style={styles.featureTitle}>Start Flashcards</Text>
-            <Text style={styles.featureText}>Flip cards at your own pace and build confidence.</Text>
+            <Text style={styles.featureText}>
+              Flip through{' '}
+              {selectedPartOfSpeech === 'All'
+                ? 'daily-use words'
+                : `${selectedPartOfSpeech.toLowerCase()}s`}{' '}
+              at your own pace.
+            </Text>
           </Pressable>
           <Pressable
             style={[styles.featureCard, styles.featureSecondary]}
@@ -162,7 +230,9 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.featureEyebrow}>Challenge</Text>
             <Text style={styles.featureTitle}>Take Quiz</Text>
             <Text style={styles.featureText}>
-              Friendly questions with encouraging feedback on {selectedQuizDifficulty.toLowerCase()} mode.
+              {selectedQuizScope === 'Word Type Only'
+                ? `Quiz across all levels for ${selectedPartOfSpeech === 'All' ? 'all word types' : selectedPartOfSpeech.toLowerCase() + 's'}.`
+                : `Quiz your current filters on ${selectedQuizDifficulty.toLowerCase()} mode.`}
             </Text>
           </Pressable>
         </View>

@@ -25,7 +25,7 @@ function createShuffledOrder(length, pinnedIndex) {
 }
 
 export default function FlashcardScreen() {
-  const { flashcards, markCardKnown } = useFlashcards();
+  const { flashcards, markCardKnown, selectedPartOfSpeech } = useFlashcards();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showEnglish, setShowEnglish] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
@@ -41,6 +41,13 @@ export default function FlashcardScreen() {
     () => `${currentIndex + 1} / ${cardOrder.length}`,
     [cardOrder.length, currentIndex]
   );
+
+  useEffect(() => {
+    setCurrentIndex(0);
+    setShowEnglish(false);
+    setIsShuffled(false);
+    setCardOrder(createDefaultOrder(flashcards.length));
+  }, [flashcards]);
 
   useEffect(() => {
     fadeAnim.setValue(0);
@@ -99,6 +106,17 @@ export default function FlashcardScreen() {
     speakText(currentCard.korean, 'ko-KR');
   };
 
+  if (!flashcards.length) {
+    return (
+      <ScreenContainer>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>No cards match this filter yet</Text>
+          <Text style={styles.emptyText}>Try a different level or word type from the home screen.</Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
   return (
     <ScreenContainer scroll={false}>
       <View style={styles.headerRow}>
@@ -116,6 +134,10 @@ export default function FlashcardScreen() {
           </Text>
         </Pressable>
       </View>
+
+      <Text style={styles.typeBadge}>
+        {selectedPartOfSpeech === 'All' ? currentCard.partOfSpeech : selectedPartOfSpeech}
+      </Text>
 
       <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
         <Pressable style={styles.card} onPress={() => setShowEnglish((current) => !current)}>
@@ -177,6 +199,17 @@ const styles = StyleSheet.create({
   },
   shuffleLabelActive: {
     color: colors.secondaryDark,
+  },
+  typeBadge: {
+    alignSelf: 'flex-start',
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.secondaryDark,
+    backgroundColor: colors.secondary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginBottom: 14,
   },
   card: {
     flex: 1,
@@ -240,5 +273,24 @@ const styles = StyleSheet.create({
   },
   controlPressed: {
     opacity: 0.85,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.textSoft,
+    textAlign: 'center',
   },
 });

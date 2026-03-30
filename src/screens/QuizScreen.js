@@ -21,15 +21,16 @@ function shuffleItems(items) {
 }
 
 export default function QuizScreen() {
-  const { flashcards, saveQuizResult, selectedQuizDifficulty } = useFlashcards();
+  const { quizFlashcards, saveQuizResult, selectedQuizDifficulty, selectedPartOfSpeech, selectedQuizScope } =
+    useFlashcards();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [sessionResults, setSessionResults] = useState([]);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const liftAnim = useRef(new Animated.Value(12)).current;
 
-  const currentCard = flashcards[currentIndex];
-  const isFinished = currentIndex >= flashcards.length;
+  const currentCard = quizFlashcards[currentIndex];
+  const isFinished = currentIndex >= quizFlashcards.length;
   const optionCount = useMemo(() => {
     if (selectedQuizDifficulty === 'Hard') {
       return 6;
@@ -48,13 +49,19 @@ export default function QuizScreen() {
     }
 
     const incorrectAnswers = shuffleItems(
-      flashcards
+      quizFlashcards
         .filter((card) => card.id !== currentCard.id)
         .map((card) => card.english)
     ).slice(0, Math.max(optionCount - 1, 1));
 
     return shuffleItems([currentCard.english, ...incorrectAnswers]);
-  }, [currentCard, flashcards, optionCount]);
+  }, [currentCard, quizFlashcards, optionCount]);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+    setFeedback('');
+    setSessionResults([]);
+  }, [quizFlashcards, selectedQuizDifficulty, selectedQuizScope]);
 
   useEffect(() => {
     fadeAnim.setValue(0);
@@ -117,13 +124,24 @@ export default function QuizScreen() {
     ? Math.round((sessionCorrectCount / sessionResults.length) * 100)
     : 0;
 
+  if (!quizFlashcards.length) {
+    return (
+      <ScreenContainer>
+        <View style={styles.centered}>
+          <Text style={styles.title}>No quiz cards match this filter yet</Text>
+          <Text style={styles.summaryNote}>Try a different level or word type from the home screen.</Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
   if (isFinished) {
     return (
       <ScreenContainer>
         <View style={styles.centered}>
           <Text style={styles.title}>Quiz complete</Text>
           <Text style={styles.summaryValue}>
-            {sessionCorrectCount} / {flashcards.length}
+            {sessionCorrectCount} / {quizFlashcards.length}
           </Text>
           <Text style={styles.subtitle}>Great effort this round</Text>
           <Text style={styles.summaryLabel}>Accuracy: {sessionAccuracy}%</Text>
@@ -141,9 +159,15 @@ export default function QuizScreen() {
   return (
     <ScreenContainer>
       <Text style={styles.progress}>
-        Question {currentIndex + 1} / {flashcards.length}
+        Question {currentIndex + 1} / {quizFlashcards.length}
       </Text>
-      <Text style={styles.difficultyBadge}>{selectedQuizDifficulty} mode</Text>
+      <View style={styles.badgeRow}>
+        <Text style={styles.difficultyBadge}>{selectedQuizDifficulty} mode</Text>
+        <Text style={styles.scopeBadge}>{selectedQuizScope}</Text>
+        <Text style={styles.typeBadge}>
+          {selectedPartOfSpeech === 'All' ? currentCard.partOfSpeech : selectedPartOfSpeech}
+        </Text>
+      </View>
       <Text style={styles.title}>Pick the best match</Text>
       <Animated.View
         style={{
@@ -194,8 +218,13 @@ const styles = StyleSheet.create({
     color: colors.textSoft,
     marginBottom: 10,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
   difficultyBadge: {
-    alignSelf: 'flex-start',
     fontSize: 13,
     fontWeight: '700',
     color: colors.secondaryDark,
@@ -203,7 +232,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
-    marginBottom: 14,
+  },
+  typeBadge: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primaryDark,
+    backgroundColor: '#ffe0d1',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  scopeBadge: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+    backgroundColor: colors.cardAlt,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
   },
   subtitle: {
     fontSize: 16,

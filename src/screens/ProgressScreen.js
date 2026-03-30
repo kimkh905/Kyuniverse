@@ -11,6 +11,7 @@ export default function ProgressScreen() {
     quizResults,
     resetProgress,
     selectedLevel,
+    selectedPartOfSpeech,
     levelKnownCount,
     dailyGoal,
     todayProgress,
@@ -19,14 +20,17 @@ export default function ProgressScreen() {
     isDailyGoalComplete,
   } = useFlashcards();
 
-  const knownCount = selectedLevel === 'All' ? knownCardIds.length : levelKnownCount;
+  const knownCount =
+    selectedLevel === 'All' && selectedPartOfSpeech === 'All' ? knownCardIds.length : levelKnownCount;
   const correctCount = quizResults.filter(Boolean).length;
   const accuracy = quizResults.length ? Math.round((correctCount / quizResults.length) * 100) : 0;
 
   return (
     <ScreenContainer>
       <Text style={styles.title}>Your Progress</Text>
-      <Text style={styles.subtitle}>Current level: {selectedLevel}</Text>
+      <Text style={styles.subtitle}>
+        Current filters: {selectedLevel} / {selectedPartOfSpeech}
+      </Text>
       <View style={styles.cheerCard}>
         <Text style={styles.cheerTitle}>You are building this little by little</Text>
         <Text style={styles.cheerText}>Even a few cards a day adds up faster than it feels.</Text>
@@ -37,7 +41,7 @@ export default function ProgressScreen() {
           <Text style={styles.goalStatValue}>
             {todayProgress}/{dailyGoal}
           </Text>
-          <Text style={styles.goalStatLabel}>Today&apos;s study goal</Text>
+          <Text style={styles.goalStatLabel}>Today's study goal</Text>
         </View>
         <View style={styles.goalStatCard}>
           <Text style={styles.goalStatValue}>{streakCount}</Text>
@@ -52,7 +56,7 @@ export default function ProgressScreen() {
         <Text style={styles.goalProgressText}>
           {isDailyGoalComplete
             ? 'You hit your goal today. Keep the streak going tomorrow.'
-            : `${dailyGoal - dailyGoalProgress} more actions to finish today’s goal.`}
+            : `${dailyGoal - dailyGoalProgress} more actions to finish today's goal.`}
         </Text>
         <View style={styles.progressTrack}>
           <View

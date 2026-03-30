@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { flashcards, levels } from '../data/flashcards';
+import { flashcards, levels, partsOfSpeech } from '../data/flashcards';
 
 const FlashcardContext = createContext(null);
 const STORAGE_KEY = 'flashcard-progress';
 const DEFAULT_DAILY_GOAL = 5;
 const quizDifficulties = ['Easy', 'Medium', 'Hard'];
+const quizScopes = ['Current Filters', 'Word Type Only'];
 
 function getTodayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -22,9 +23,8 @@ function calculateStreak(activityByDate) {
 
   for (let daysAgo = 0; ; daysAgo += 1) {
     const dateKey = getDateKeyDaysAgo(daysAgo);
-    const completedToday = (activityByDate[dateKey] ?? 0) > 0;
 
-    if (!completedToday) {
+    if ((activityByDate[dateKey] ?? 0) <= 0) {
       break;
     }
 
@@ -38,7 +38,9 @@ export function FlashcardProvider({ children }) {
   const [knownCardIds, setKnownCardIds] = useState([]);
   const [quizResults, setQuizResults] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState('All');
+  const [selectedPartOfSpeech, setSelectedPartOfSpeech] = useState('All');
   const [selectedQuizDifficulty, setSelectedQuizDifficulty] = useState('Easy');
+  const [selectedQuizScope, setSelectedQuizScope] = useState('Current Filters');
   const [dailyGoal] = useState(DEFAULT_DAILY_GOAL);
   const [activityByDate, setActivityByDate] = useState({});
   const [isHydrated, setIsHydrated] = useState(false);
@@ -68,11 +70,22 @@ export function FlashcardProvider({ children }) {
           setSelectedLevel(parsedProgress.selectedLevel);
         }
 
+        if (typeof parsedProgress.selectedPartOfSpeech === 'string') {
+          setSelectedPartOfSpeech(parsedProgress.selectedPartOfSpeech);
+        }
+
         if (
           typeof parsedProgress.selectedQuizDifficulty === 'string' &&
           quizDifficulties.includes(parsedProgress.selectedQuizDifficulty)
         ) {
           setSelectedQuizDifficulty(parsedProgress.selectedQuizDifficulty);
+        }
+
+        if (
+          typeof parsedProgress.selectedQuizScope === 'string' &&
+          quizScopes.includes(parsedProgress.selectedQuizScope)
+        ) {
+          setSelectedQuizScope(parsedProgress.selectedQuizScope);
         }
 
         if (
@@ -111,7 +124,9 @@ export function FlashcardProvider({ children }) {
             knownCardIds,
             quizResults,
             selectedLevel,
+            selectedPartOfSpeech,
             selectedQuizDifficulty,
+            selectedQuizScope,
             activityByDate,
           })
         );
@@ -127,17 +142,27 @@ export function FlashcardProvider({ children }) {
     knownCardIds,
     quizResults,
     selectedLevel,
+    selectedPartOfSpeech,
     selectedQuizDifficulty,
+    selectedQuizScope,
   ]);
 
-  const filteredFlashcards =
-    selectedLevel === 'All'
-      ? flashcards
-      : flashcards.filter((card) => card.level === selectedLevel);
+  const filteredByLevel =
+    selectedLevel === 'All' ? flashcards : flashcards.filter((card) => card.level === selectedLevel);
 
-  const levelKnownCount = filteredFlashcards.filter((card) =>
-    knownCardIds.includes(card.id)
-  ).length;
+  const filteredFlashcards =
+    selectedPartOfSpeech === 'All'
+      ? filteredByLevel
+      : filteredByLevel.filter((card) => card.partOfSpeech === selectedPartOfSpeech);
+
+  const quizFlashcards =
+    selectedQuizScope === 'Word Type Only'
+      ? selectedPartOfSpeech === 'All'
+        ? flashcards
+        : flashcards.filter((card) => card.partOfSpeech === selectedPartOfSpeech)
+      : filteredFlashcards;
+
+  const levelKnownCount = filteredFlashcards.filter((card) => knownCardIds.includes(card.id)).length;
 
   const trackDailyActivity = () => {
     const todayKey = getTodayKey();
@@ -175,8 +200,16 @@ export function FlashcardProvider({ children }) {
     setSelectedLevel(level);
   };
 
+  const changePartOfSpeech = (partOfSpeech) => {
+    setSelectedPartOfSpeech(partOfSpeech);
+  };
+
   const changeQuizDifficulty = (difficulty) => {
     setSelectedQuizDifficulty(difficulty);
+  };
+
+  const changeQuizScope = (scope) => {
+    setSelectedQuizScope(scope);
   };
 
   const todayKey = getTodayKey();
@@ -188,11 +221,16 @@ export function FlashcardProvider({ children }) {
   const value = useMemo(
     () => ({
       flashcards: filteredFlashcards,
+      quizFlashcards,
       allFlashcards: flashcards,
       levels,
+      partsOfSpeech,
       selectedLevel,
+      selectedPartOfSpeech,
       quizDifficulties,
       selectedQuizDifficulty,
+      quizScopes,
+      selectedQuizScope,
       knownCardIds,
       quizResults,
       levelKnownCount,
@@ -206,7 +244,9 @@ export function FlashcardProvider({ children }) {
       saveQuizResult,
       resetProgress,
       changeLevel,
+      changePartOfSpeech,
       changeQuizDifficulty,
+      changeQuizScope,
     }),
     [
       dailyGoal,
@@ -216,19 +256,18 @@ export function FlashcardProvider({ children }) {
       isHydrated,
       knownCardIds,
       levelKnownCount,
+      quizFlashcards,
       quizResults,
-      selectedQuizDifficulty,
       selectedLevel,
+      selectedPartOfSpeech,
+      selectedQuizDifficulty,
+      selectedQuizScope,
       streakCount,
       todayProgress,
     ]
   );
 
-  return (
-    <FlashcardContext.Provider value={value}>
-      {children}
-    </FlashcardContext.Provider>
-  );
+  return <FlashcardContext.Provider value={value}>{children}</FlashcardContext.Provider>;
 }
 
 export function useFlashcards() {
