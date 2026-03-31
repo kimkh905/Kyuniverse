@@ -13,14 +13,19 @@
       "backgroundColor": "#fff7ef"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kimkh905.koreanenglishflashcards"
     },
     "android": {
+      "package": "com.kimkh905.koreanenglishflashcards",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#fff7ef"
       }
     },
+    "plugins": [
+      "expo-notifications"
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     }

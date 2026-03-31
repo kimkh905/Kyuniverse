@@ -1,12 +1,19 @@
+import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { FlashcardProvider } from './src/context/FlashcardContext';
 import { useFlashcards } from './src/context/FlashcardContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import colors from './src/theme/colors';
+import { configureNotifications } from './src/utils/notifications';
 
 function AppContent() {
   const { isHydrated } = useFlashcards();
+
+  useEffect(() => {
+    configureNotifications();
+  }, []);
 
   if (!isHydrated) {
     return (

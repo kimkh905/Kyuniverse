@@ -37,6 +37,10 @@ export default function HomeScreen({ navigation }) {
     dailyGoal,
     todayProgress,
     streakCount,
+    selectedGoalTarget,
+    goalProgressCount,
+    remainingGoalCount,
+    isGoalComplete,
   } = useFlashcards();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(18)).current;
@@ -161,6 +165,19 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.goalLabel}>Day streak</Text>
           </View>
         </View>
+
+        <Pressable
+          style={({ pressed }) => [styles.goalFocusCard, pressed && styles.levelChipPressed]}
+          onPress={() => navigation.navigate('Goals')}
+        >
+          <Text style={styles.goalFocusEyebrow}>Goal focus</Text>
+          <Text style={styles.goalFocusTitle}>{selectedGoalTarget}-word milestone</Text>
+          <Text style={styles.goalFocusText}>
+            {isGoalComplete
+              ? 'You hit this one already. Tap here and level up your target.'
+              : `${goalProgressCount} memorized so far, ${remainingGoalCount} left to reach your goal.`}
+          </Text>
+        </Pressable>
 
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Current level</Text>
@@ -487,6 +504,29 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   favoriteCardText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSoft,
+  },
+  goalFocusCard: {
+    backgroundColor: '#e7f7f0',
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 22,
+  },
+  goalFocusEyebrow: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.mintDark,
+    marginBottom: 6,
+  },
+  goalFocusTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 6,
+  },
+  goalFocusText: {
     fontSize: 14,
     lineHeight: 20,
     color: colors.textSoft,

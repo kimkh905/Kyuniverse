@@ -1,10 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenContainer from '../components/ScreenContainer';
 import { useFlashcards } from '../context/FlashcardContext';
 import colors from '../theme/colors';
 
-export default function ProgressScreen() {
+export default function ProgressScreen({ navigation }) {
   const {
     flashcards,
     knownCardIds,
@@ -15,6 +15,10 @@ export default function ProgressScreen() {
     levelKnownCount,
     favoriteCardIds,
     favoriteCount,
+    selectedGoalTarget,
+    goalProgressCount,
+    remainingGoalCount,
+    isGoalComplete,
     dailyGoal,
     todayProgress,
     dailyGoalProgress,
@@ -69,6 +73,21 @@ export default function ProgressScreen() {
           />
         </View>
       </View>
+
+      <Pressable
+        style={({ pressed }) => [styles.milestoneCard, pressed && styles.pressed]}
+        onPress={() => navigation.navigate('Goals')}
+      >
+        <Text style={styles.milestoneTitle}>Memorized-word goal</Text>
+        <Text style={styles.milestoneValue}>
+          {goalProgressCount}/{selectedGoalTarget}
+        </Text>
+        <Text style={styles.milestoneText}>
+          {isGoalComplete
+            ? 'You reached your current milestone. Tap to set a bigger one.'
+            : `${remainingGoalCount} more words to reach your current goal.`}
+        </Text>
+      </Pressable>
 
       <View style={styles.grid}>
         <View style={styles.statCard}>
@@ -165,6 +184,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     overflow: 'hidden',
   },
+  milestoneCard: {
+    backgroundColor: '#e7f7f0',
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 16,
+  },
+  milestoneTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.mintDark,
+    marginBottom: 6,
+  },
+  milestoneValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 6,
+  },
+  milestoneText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSoft,
+  },
   progressFill: {
     height: '100%',
     backgroundColor: colors.primary,
@@ -203,5 +245,8 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 14,
     color: colors.textSoft,
+  },
+  pressed: {
+    opacity: 0.85,
   },
 });

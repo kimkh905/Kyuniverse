@@ -5,8 +5,10 @@ import { flashcards, levels, partsOfSpeech } from '../data/flashcards';
 const FlashcardContext = createContext(null);
 const STORAGE_KEY = 'flashcard-progress';
 const DEFAULT_DAILY_GOAL = 5;
+const DEFAULT_GOAL_TARGET = 20;
 const quizDifficulties = ['Easy', 'Medium', 'Hard'];
 const quizScopes = ['Current Filters', 'Word Type Only'];
+const goalTargets = [10, 20, 30, 50];
 
 function getTodayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -43,6 +45,8 @@ export function FlashcardProvider({ children }) {
   const [selectedQuizDifficulty, setSelectedQuizDifficulty] = useState('Easy');
   const [selectedQuizScope, setSelectedQuizScope] = useState('Current Filters');
   const [dailyGoal] = useState(DEFAULT_DAILY_GOAL);
+  const [selectedGoalTarget, setSelectedGoalTarget] = useState(DEFAULT_GOAL_TARGET);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
   const [activityByDate, setActivityByDate] = useState({});
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -94,6 +98,17 @@ export function FlashcardProvider({ children }) {
         }
 
         if (
+          typeof parsedProgress.selectedGoalTarget === 'number' &&
+          goalTargets.includes(parsedProgress.selectedGoalTarget)
+        ) {
+          setSelectedGoalTarget(parsedProgress.selectedGoalTarget);
+        }
+
+        if (typeof parsedProgress.reminderEnabled === 'boolean') {
+          setReminderEnabled(parsedProgress.reminderEnabled);
+        }
+
+        if (
           parsedProgress.activityByDate &&
           typeof parsedProgress.activityByDate === 'object' &&
           !Array.isArray(parsedProgress.activityByDate)
@@ -133,6 +148,8 @@ export function FlashcardProvider({ children }) {
             selectedPartOfSpeech,
             selectedQuizDifficulty,
             selectedQuizScope,
+            selectedGoalTarget,
+            reminderEnabled,
             activityByDate,
           })
         );
@@ -147,7 +164,9 @@ export function FlashcardProvider({ children }) {
     favoriteCardIds,
     isHydrated,
     knownCardIds,
+    reminderEnabled,
     quizResults,
+    selectedGoalTarget,
     selectedLevel,
     selectedPartOfSpeech,
     selectedQuizDifficulty,
@@ -171,6 +190,9 @@ export function FlashcardProvider({ children }) {
 
   const levelKnownCount = filteredFlashcards.filter((card) => knownCardIds.includes(card.id)).length;
   const favoriteCount = filteredFlashcards.filter((card) => favoriteCardIds.includes(card.id)).length;
+  const goalProgressCount = Math.min(knownCardIds.length, selectedGoalTarget);
+  const remainingGoalCount = Math.max(selectedGoalTarget - knownCardIds.length, 0);
+  const isGoalComplete = knownCardIds.length >= selectedGoalTarget;
 
   const trackDailyActivity = () => {
     const todayKey = getTodayKey();
@@ -229,6 +251,14 @@ export function FlashcardProvider({ children }) {
     setSelectedQuizScope(scope);
   };
 
+  const changeGoalTarget = (goalTarget) => {
+    setSelectedGoalTarget(goalTarget);
+  };
+
+  const changeReminderEnabled = (enabled) => {
+    setReminderEnabled(enabled);
+  };
+
   const todayKey = getTodayKey();
   const todayProgress = activityByDate[todayKey] ?? 0;
   const dailyGoalProgress = Math.min(todayProgress, dailyGoal);
@@ -248,6 +278,12 @@ export function FlashcardProvider({ children }) {
       selectedQuizDifficulty,
       quizScopes,
       selectedQuizScope,
+      goalTargets,
+      selectedGoalTarget,
+      goalProgressCount,
+      remainingGoalCount,
+      isGoalComplete,
+      reminderEnabled,
       knownCardIds,
       favoriteCardIds,
       favoriteCount,
@@ -267,6 +303,8 @@ export function FlashcardProvider({ children }) {
       changePartOfSpeech,
       changeQuizDifficulty,
       changeQuizScope,
+      changeGoalTarget,
+      changeReminderEnabled,
     }),
     [
       dailyGoal,
@@ -274,12 +312,18 @@ export function FlashcardProvider({ children }) {
       filteredFlashcards,
       favoriteCardIds,
       favoriteCount,
+      goalProgressCount,
+      goalTargets,
       isDailyGoalComplete,
+      isGoalComplete,
       isHydrated,
       knownCardIds,
       levelKnownCount,
       quizFlashcards,
       quizResults,
+      remainingGoalCount,
+      reminderEnabled,
+      selectedGoalTarget,
       selectedLevel,
       selectedPartOfSpeech,
       selectedQuizDifficulty,
