@@ -68,17 +68,26 @@ export default function LoginScreen({ navigation, onLogin }) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.backgroundShapeTop} />
+        <View style={styles.backgroundShapeMid} />
         <View style={styles.backgroundShapeBottom} />
 
         <View style={styles.card}>
-          <View style={styles.iconWrap}>
-            <Ionicons name="person" size={28} color={colors.primary} />
-          </View>
+          <View style={styles.headerArea}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeLabel}>Daily Korean practice</Text>
+            </View>
 
-          <Text style={styles.title}>Member Login</Text>
-          <Text style={styles.subtitle}>
-            Welcome back. Sign in to keep building toward your learning goals.
-          </Text>
+            <View style={styles.iconWrap}>
+              <View style={styles.iconInner}>
+                <Ionicons name="person" size={30} color={colors.primary} />
+              </View>
+            </View>
+
+            <Text style={styles.title}>Member Login</Text>
+            <Text style={styles.subtitle}>
+              Welcome back. Sign in to pick up where you left off and keep your streak moving.
+            </Text>
+          </View>
 
           <InputField
             icon="person-outline"
@@ -134,19 +143,23 @@ export default function LoginScreen({ navigation, onLogin }) {
             <ActionButton title="Login" onPress={handleSubmit} />
           </View>
 
-          <View style={styles.googleBlock}>
-            <ActionButton title="Continue with Google" variant="secondary" disabled />
-            <Text style={styles.googleHint}>
-              Google sign-in is temporarily disabled in the preview build so the interface can render safely.
-            </Text>
+          <View style={styles.helperCard}>
+            <View style={styles.helperRow}>
+              <View style={styles.helperIcon}>
+                <Ionicons name="sparkles-outline" size={16} color={colors.primaryDark} />
+              </View>
+              <View style={styles.helperTextWrap}>
+                <Text style={styles.helperTitle}>Keep your progress local</Text>
+                <Text style={styles.helperCopy}>
+                  This preview uses local state only, so you can explore the experience without a backend.
+                </Text>
+              </View>
+            </View>
           </View>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Not a member?</Text>
-            <Pressable
-              style={({ pressed }) => [pressed && styles.pressed]}
-              onPress={() => navigation.navigate('SignUp')}
-            >
+            <Pressable style={({ pressed }) => [pressed && styles.pressed]}>
               <Text style={styles.footerLink}>Create an account</Text>
             </Pressable>
           </View>
@@ -181,6 +194,16 @@ const styles = StyleSheet.create({
     left: -60,
     opacity: 0.9,
   },
+  backgroundShapeMid: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 999,
+    backgroundColor: colors.card,
+    top: '28%',
+    left: -40,
+    opacity: 0.55,
+  },
   card: {
     backgroundColor: colors.softSurface,
     borderRadius: tokens.radius.panel,
@@ -189,16 +212,41 @@ const styles = StyleSheet.create({
     borderColor: colors.backgroundAccent,
     ...tokens.shadow.card,
   },
+  headerArea: {
+    alignItems: 'center',
+    marginBottom: tokens.spacing.lg,
+  },
+  badge: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: colors.white,
+    marginBottom: tokens.spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.backgroundAccent,
+  },
+  badgeLabel: {
+    fontSize: tokens.type.caption,
+    fontWeight: '700',
+    color: colors.primaryDark,
+  },
   iconWrap: {
-    width: 72,
-    height: 72,
+    width: 88,
+    height: 88,
+    borderRadius: 999,
+    backgroundColor: colors.lavender,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: tokens.spacing.lg,
+    ...tokens.shadow.card,
+  },
+  iconInner: {
+    width: 64,
+    height: 64,
     borderRadius: 999,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: tokens.spacing.lg,
-    ...tokens.shadow.card,
   },
   title: {
     fontSize: 30,
@@ -253,14 +301,41 @@ const styles = StyleSheet.create({
   buttonWrap: {
     marginBottom: tokens.spacing.md,
   },
-  googleBlock: {
+  helperCard: {
+    backgroundColor: colors.white,
+    borderRadius: tokens.radius.cardSm,
+    padding: tokens.spacing.md,
+    borderWidth: 1,
+    borderColor: colors.backgroundAccent,
     marginBottom: tokens.spacing.xl,
+    ...tokens.shadow.card,
   },
-  googleHint: {
-    marginTop: 10,
+  helperRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: tokens.spacing.sm,
+  },
+  helperIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 999,
+    backgroundColor: colors.lavender,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helperTextWrap: {
+    flex: 1,
+    gap: 4,
+  },
+  helperTitle: {
+    fontSize: tokens.type.body,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  helperCopy: {
     fontSize: tokens.type.caption,
+    lineHeight: 18,
     color: colors.textSoft,
-    textAlign: 'center',
   },
   footer: {
     alignItems: 'center',
