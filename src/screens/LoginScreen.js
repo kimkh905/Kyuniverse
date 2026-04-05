@@ -27,15 +27,8 @@ const googleConfig = {
 
 const hasGoogleConfig = Object.values(googleConfig).some(Boolean);
 
-export default function LoginScreen({ navigation, onLogin }) {
-  const passwordRef = useRef(null);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [googleError, setGoogleError] = useState('');
+function GoogleLoginButton({ onLogin, onError }) {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-
   const [, response, promptAsync] = Google.useAuthRequest({
     ...googleConfig,
     scopes: ['openid', 'profile', 'email'],
@@ -51,7 +44,7 @@ export default function LoginScreen({ navigation, onLogin }) {
       if (response.type !== 'success') {
         setIsGoogleLoading(false);
         if (response.type === 'error') {
-          setGoogleError('Google sign-in did not complete. Please try again.');
+          onError('Google sign-in did not complete. Please try again.');
         }
         return;
       }
@@ -59,7 +52,7 @@ export default function LoginScreen({ navigation, onLogin }) {
       const accessToken = response.authentication?.accessToken;
 
       if (!accessToken) {
-        setGoogleError('Google sign-in finished, but no profile token was returned.');
+        onError('Google sign-in finished, but no profile token was returned.');
         setIsGoogleLoading(false);
         return;
       }
@@ -84,14 +77,47 @@ export default function LoginScreen({ navigation, onLogin }) {
           rememberMe: true,
         });
       } catch (error) {
-        setGoogleError(error.message || 'Google sign-in did not complete.');
+        onError(error.message || 'Google sign-in did not complete.');
       } finally {
         setIsGoogleLoading(false);
       }
     };
 
     handleGoogleResponse();
-  }, [onLogin, response]);
+  }, [onError, onLogin, response]);
+
+  const handleGoogleLogin = async () => {
+    onError('');
+    setIsGoogleLoading(true);
+
+    try {
+      await promptAsync();
+    } catch (error) {
+      onError(error.message || 'Google sign-in could not start.');
+      setIsGoogleLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <ActionButton
+        title={isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google'}
+        onPress={handleGoogleLogin}
+        variant="secondary"
+        disabled={isGoogleLoading}
+      />
+      <Text style={styles.googleHint}>Google sign-in uses your configured Expo OAuth client IDs.</Text>
+    </>
+  );
+}
+
+export default function LoginScreen({ navigation, onLogin }) {
+  const passwordRef = useRef(null);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [googleError, setGoogleError] = useState('');
 
   const clearFieldError = (field) => {
     setErrors((current) => {
@@ -131,24 +157,6 @@ export default function LoginScreen({ navigation, onLogin }) {
       email: '',
       rememberMe,
     });
-  };
-
-  const handleGoogleLogin = async () => {
-    setGoogleError('');
-
-    if (!hasGoogleConfig) {
-      setGoogleError('Add your EXPO_PUBLIC_GOOGLE client IDs to enable Google sign-in.');
-      return;
-    }
-
-    setIsGoogleLoading(true);
-
-    try {
-      await promptAsync();
-    } catch (error) {
-      setGoogleError(error.message || 'Google sign-in could not start.');
-      setIsGoogleLoading(false);
-    }
   };
 
   return (
@@ -225,16 +233,19 @@ export default function LoginScreen({ navigation, onLogin }) {
           </View>
 
           <View style={styles.googleBlock}>
-            <ActionButton
-              title={isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google'}
-              onPress={handleGoogleLogin}
-              variant="secondary"
-              disabled={isGoogleLoading}
-            />
+            {hasGoogleConfig && Platform.OS !== 'web' ? (
+              <GoogleLoginButton onLogin={onLogin} onError={setGoogleError} />
+            ) : (
+              <>
+                <ActionButton title="Continue with Google" variant="secondary" disabled />
+                <Text style={styles.googleHint}>
+                  {Platform.OS === 'web'
+                    ? 'Google sign-in is disabled in the web preview so the interface can render safely.'
+                    : 'Add your EXPO_PUBLIC_GOOGLE client IDs to enable Google sign-in.'}
+                </Text>
+              </>
+            )}
             {googleError ? <Text style={styles.googleError}>{googleError}</Text> : null}
-            {!googleError && hasGoogleConfig ? (
-              <Text style={styles.googleHint}>Google sign-in uses your configured Expo OAuth client IDs.</Text>
-            ) : null}
           </View>
 
           <View style={styles.footer}>
