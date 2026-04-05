@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenContainer from '../components/ScreenContainer';
 import { useFlashcards } from '../context/FlashcardContext';
@@ -7,11 +7,29 @@ import colors from '../theme/colors';
 export default function PrivacyScreen() {
   const { resetProgress, reminderEnabled } = useFlashcards();
 
+  const handleDeleteAllData = () => {
+    Alert.alert(
+      'Delete local learning data?',
+      'This will remove saved progress, review history, bookmarks, goals, and quiz stats from this device.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: resetProgress,
+        },
+      ]
+    );
+  };
+
   return (
     <ScreenContainer>
       <Text style={styles.title}>Privacy & Data</Text>
       <Text style={styles.subtitle}>
-        This app is designed to keep learning data simple, local, and under the user’s control.
+        This app is designed to keep learning data simple, local, and under the user's control.
       </Text>
 
       <View style={styles.card}>
@@ -45,7 +63,11 @@ export default function PrivacyScreen() {
         </Text>
       </View>
 
-      <PrimaryButton title="Delete All Local Learning Data" variant="secondary" onPress={resetProgress} />
+      <PrimaryButton
+        title="Delete All Local Learning Data"
+        variant="secondary"
+        onPress={handleDeleteAllData}
+      />
     </ScreenContainer>
   );
 }
