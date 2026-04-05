@@ -1,8 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import AppShell from '../components/AppShell';
+import BottomNav from '../components/BottomNav';
+import InfoCard from '../components/InfoCard';
 import PrimaryButton from '../components/PrimaryButton';
-import ScreenContainer from '../components/ScreenContainer';
+import ProgressBar from '../components/ProgressBar';
+import StatCard from '../components/StatCard';
 import { useFlashcards } from '../context/FlashcardContext';
 import colors from '../theme/colors';
+import tokens from '../theme/tokens';
 
 function getEncouragement({ isDailyGoalComplete, isGoalComplete, streakCount, mistakeCount }) {
   if (isGoalComplete) {
@@ -63,205 +68,125 @@ export default function ProgressScreen({ navigation }) {
   });
 
   return (
-    <ScreenContainer>
+    <AppShell
+      scroll
+      contentContainerStyle={styles.content}
+      bottomNav={
+        <BottomNav
+          navigation={navigation}
+          currentRoute="Progress"
+          onCenterPress={() => navigation.navigate('Flashcards')}
+        />
+      }
+    >
       <View style={styles.hero}>
         <Text style={styles.title}>Your Progress</Text>
         <Text style={styles.subtitle}>A quick look at what is sticking and what wants one more pass.</Text>
       </View>
 
-      <View style={styles.filterStrip}>
+      <InfoCard style={styles.filterStrip}>
         <Text style={styles.filterLabel}>Level: {selectedLevel}</Text>
         <Text style={styles.filterLabel}>Word type: {selectedPartOfSpeech}</Text>
         <Text style={styles.filterLabel}>Focus: {selectedStudyMode}</Text>
         {searchQuery ? <Text style={styles.filterLabel}>Search: "{searchQuery}"</Text> : null}
-      </View>
+      </InfoCard>
 
       <View style={styles.summaryHero}>
-        <View style={styles.summaryHeroWarm}>
-          <Text style={styles.summaryHeroEyebrow}>Today</Text>
-          <Text style={styles.summaryHeroValue}>
-            {todayProgress}/{dailyGoal}
-          </Text>
-          <Text style={styles.summaryHeroText}>Daily study goal</Text>
-        </View>
-        <View style={styles.summaryHeroMint}>
-          <Text style={styles.summaryHeroEyebrow}>Streak</Text>
-          <Text style={styles.summaryHeroValue}>{streakCount}</Text>
-          <Text style={styles.summaryHeroText}>Days in a row</Text>
-        </View>
-        <View style={styles.summaryHeroLavender}>
-          <Text style={styles.summaryHeroEyebrow}>Accuracy</Text>
-          <Text style={styles.summaryHeroValue}>{accuracy}%</Text>
-          <Text style={styles.summaryHeroText}>Quiz score</Text>
-        </View>
+        <StatCard value={`${todayProgress}/${dailyGoal}`} label="Daily study goal" tone="beige" />
+        <StatCard value={streakCount} label="Days in a row" tone="lavender" />
+        <StatCard value={`${accuracy}%`} label="Quiz score" tone="lavender" />
       </View>
 
-      <View style={styles.cheerCard}>
+      <InfoCard style={styles.cheerCard}>
         <Text style={styles.cheerTitle}>Friendly check-in</Text>
         <Text style={styles.cheerText}>{encouragement}</Text>
-      </View>
+      </InfoCard>
 
-      <View style={styles.progressFeatureCard}>
-        <View style={styles.featureHeader}>
-          <Text style={styles.featureTitle}>Daily goal</Text>
-          <Text style={styles.featureValue}>
-            {todayProgress}/{dailyGoal}
-          </Text>
-        </View>
+      <InfoCard title="Daily goal">
         <Text style={styles.featureText}>
           {isDailyGoalComplete
-            ? 'You finished today’s goal. If you keep going, it is just extra credit now.'
-            : `${dailyGoal - dailyGoalProgress} more actions will finish today’s goal.`}
+            ? "You finished today's goal. If you keep going, it is just extra credit now."
+            : `${dailyGoal - dailyGoalProgress} more actions will finish today's goal.`}
         </Text>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFillWarm, { width: `${dailyGoalPercent}%` }]} />
-        </View>
-      </View>
+        <ProgressBar progress={dailyGoalPercent} tone="blue" height={12} />
+      </InfoCard>
 
-      <Pressable
-        style={({ pressed }) => [styles.progressFeatureCard, styles.featureCardMint, pressed && styles.pressed]}
-        onPress={() => navigation.navigate('Goals')}
-      >
-        <View style={styles.featureHeader}>
-          <Text style={styles.featureTitle}>Word milestone</Text>
+      <Pressable style={({ pressed }) => [styles.infoPressable, pressed && styles.pressed]} onPress={() => navigation.navigate('Goals')}>
+        <InfoCard title="Word milestone">
           <Text style={styles.featureValue}>
             {goalProgressCount}/{selectedGoalTarget}
           </Text>
-        </View>
-        <Text style={styles.featureText}>
-          {isGoalComplete
-            ? 'You reached this milestone. Tap here when you are ready for a bigger one.'
-            : `${remainingGoalCount} more memorized words to reach your current target.`}
-        </Text>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFillMint, { width: `${wordGoalPercent}%` }]} />
-        </View>
+          <Text style={styles.featureText}>
+            {isGoalComplete
+              ? 'You reached this milestone. Tap here when you are ready for a bigger one.'
+              : `${remainingGoalCount} more memorized words to reach your current target.`}
+          </Text>
+          <ProgressBar progress={wordGoalPercent} tone="green" height={12} />
+        </InfoCard>
       </Pressable>
 
-      <View style={styles.badgeSection}>
-        <Text style={styles.sectionTitle}>Momentum badges</Text>
-        <View style={styles.badgeRow}>
-          <View style={[styles.badgeCard, styles.badgeCardGold]}>
-            <Text style={styles.badgeValue}>{knownCount}</Text>
-            <Text style={styles.badgeLabel}>Learned</Text>
-          </View>
-          <View style={[styles.badgeCard, styles.badgeCardBlue]}>
-            <Text style={styles.badgeValue}>{mistakeCount}</Text>
-            <Text style={styles.badgeLabel}>Review</Text>
-          </View>
-          <View style={[styles.badgeCard, styles.badgeCardPink]}>
-            <Text style={styles.badgeValue}>
-              {selectedLevel === 'All' && selectedPartOfSpeech === 'All'
-                ? favoriteCardIds.length
-                : favoriteCount}
-            </Text>
-            <Text style={styles.badgeLabel}>Saved</Text>
-          </View>
-        </View>
+      <Text style={styles.sectionTitle}>Momentum badges</Text>
+      <View style={styles.badgeRow}>
+        <StatCard value={knownCount} label="Learned" tone="beige" />
+        <StatCard value={mistakeCount} label="Review" tone="lavender" />
+        <StatCard
+          value={selectedLevel === 'All' && selectedPartOfSpeech === 'All' ? favoriteCardIds.length : favoriteCount}
+          label="Saved"
+          tone="lavender"
+        />
       </View>
 
-      <View style={styles.gridSection}>
-        <Text style={styles.sectionTitle}>Study snapshot</Text>
-        <View style={styles.grid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{flashcards.length}</Text>
-            <Text style={styles.statLabel}>Cards in current view</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{correctCount}</Text>
-            <Text style={styles.statLabel}>Correct quiz answers</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{streakCount}</Text>
-            <Text style={styles.statLabel}>Current streak</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{accuracy}%</Text>
-            <Text style={styles.statLabel}>Overall quiz accuracy</Text>
-          </View>
-        </View>
+      <Text style={styles.sectionTitle}>Study snapshot</Text>
+      <View style={styles.snapshotGrid}>
+        <InfoCard title="Cards in current view">{String(flashcards.length)}</InfoCard>
+        <InfoCard title="Correct quiz answers">{String(correctCount)}</InfoCard>
+        <InfoCard title="Current streak">{String(streakCount)}</InfoCard>
+        <InfoCard title="Overall quiz accuracy">{`${accuracy}%`}</InfoCard>
       </View>
 
       <View style={styles.actions}>
         <PrimaryButton title="Privacy & Data" variant="secondary" onPress={() => navigation.navigate('Privacy')} />
         <PrimaryButton title="Reset Progress" variant="secondary" onPress={resetProgress} />
       </View>
-    </ScreenContainer>
+    </AppShell>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    paddingBottom: 28,
+  },
   hero: {
     marginTop: 6,
     marginBottom: 18,
   },
   title: {
-    fontSize: 30,
+    fontSize: tokens.type.screenTitle,
     fontWeight: '800',
     color: colors.text,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: tokens.type.body,
     lineHeight: 22,
     color: colors.textSoft,
   },
   filterStrip: {
-    backgroundColor: colors.cardAlt,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 18,
-    gap: 6,
+    marginBottom: tokens.spacing.md,
   },
   filterLabel: {
-    fontSize: 13,
+    fontSize: tokens.type.caption,
     color: colors.textSoft,
+    marginBottom: 4,
   },
   summaryHero: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 18,
-  },
-  summaryHeroWarm: {
-    flex: 1,
-    borderRadius: 22,
-    padding: 16,
-    backgroundColor: '#ffe4d6',
-  },
-  summaryHeroMint: {
-    flex: 1,
-    borderRadius: 22,
-    padding: 16,
-    backgroundColor: '#daf5e7',
-  },
-  summaryHeroLavender: {
-    flex: 1,
-    borderRadius: 22,
-    padding: 16,
-    backgroundColor: '#efe6ff',
-  },
-  summaryHeroEyebrow: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textSoft,
-    marginBottom: 8,
-  },
-  summaryHeroValue: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  summaryHeroText: {
-    fontSize: 13,
-    color: colors.textSoft,
-    lineHeight: 18,
+    gap: tokens.spacing.sm,
+    marginBottom: tokens.spacing.md,
   },
   cheerCard: {
+    marginBottom: tokens.spacing.md,
     backgroundColor: colors.secondary,
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 18,
   },
   cheerTitle: {
     fontSize: 16,
@@ -274,32 +199,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: colors.secondaryDark,
   },
-  progressFeatureCard: {
-    backgroundColor: colors.card,
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: colors.backgroundAccent,
-  },
-  featureCardMint: {
-    backgroundColor: '#eefaf4',
-  },
-  featureHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  featureTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.text,
-  },
   featureValue: {
     fontSize: 20,
     fontWeight: '800',
     color: colors.primaryDark,
+    marginBottom: 8,
   },
   featureText: {
     fontSize: 14,
@@ -307,89 +211,27 @@ const styles = StyleSheet.create({
     color: colors.textSoft,
     marginBottom: 12,
   },
-  progressTrack: {
-    height: 12,
-    borderRadius: 999,
-    backgroundColor: colors.white,
-    overflow: 'hidden',
+  infoPressable: {
+    marginTop: tokens.spacing.md,
   },
-  progressFillWarm: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 999,
-  },
-  progressFillMint: {
-    height: '100%',
-    backgroundColor: colors.mintDark,
-    borderRadius: 999,
-  },
-  badgeSection: {
-    marginBottom: 18,
+  pressed: {
+    opacity: 0.9,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: '800',
+    fontSize: tokens.type.sectionTitle,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 12,
+    marginTop: tokens.spacing.lg,
+    marginBottom: tokens.spacing.md,
   },
   badgeRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: tokens.spacing.sm,
   },
-  badgeCard: {
-    flex: 1,
-    borderRadius: 22,
-    paddingVertical: 18,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-  },
-  badgeCardGold: {
-    backgroundColor: '#fff0b8',
-  },
-  badgeCardBlue: {
-    backgroundColor: '#e8f4ff',
-  },
-  badgeCardPink: {
-    backgroundColor: '#ffe9f2',
-  },
-  badgeValue: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  badgeLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textSoft,
-  },
-  gridSection: {
-    marginBottom: 18,
-  },
-  grid: {
-    gap: 12,
-  },
-  statCard: {
-    backgroundColor: colors.card,
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 2,
-    borderColor: colors.backgroundAccent,
-  },
-  statValue: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.primaryDark,
-    marginBottom: 6,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: colors.textSoft,
+  snapshotGrid: {
+    gap: tokens.spacing.md,
   },
   actions: {
-    marginTop: 6,
-  },
-  pressed: {
-    opacity: 0.85,
+    marginTop: tokens.spacing.lg,
   },
 });

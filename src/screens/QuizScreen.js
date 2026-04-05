@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import AppShell from '../components/AppShell';
+import GradientHeader from '../components/GradientHeader';
+import InfoCard from '../components/InfoCard';
 import PrimaryButton from '../components/PrimaryButton';
-import ScreenContainer from '../components/ScreenContainer';
+import TopIconButton from '../components/TopIconButton';
 import { useFlashcards } from '../context/FlashcardContext';
 import colors from '../theme/colors';
+import tokens from '../theme/tokens';
 import { getExampleSentence } from '../utils/examples';
 import { speakText } from '../utils/pronunciation';
 
@@ -79,7 +83,7 @@ export default function QuizScreen({ navigation }) {
 
   useEffect(() => {
     rememberStudyScreen('Quiz');
-  }, []);
+  }, [rememberStudyScreen]);
 
   useEffect(() => {
     fadeAnim.setValue(0);
@@ -151,68 +155,67 @@ export default function QuizScreen({ navigation }) {
 
   if (!quizFlashcards.length) {
     return (
-      <ScreenContainer>
-        <View style={styles.centered}>
-          <Text style={styles.title}>No quiz cards match this filter yet</Text>
-          <Text style={styles.summaryNote}>Try a different level or word type from the home screen.</Text>
-          <View style={styles.summaryActions}>
-            <PrimaryButton title="Show All Cards" onPress={handleShowAllCards} />
-            <PrimaryButton title="Back Home" variant="secondary" onPress={() => navigation.navigate('Home')} />
-          </View>
+      <AppShell>
+        <InfoCard title="No quiz cards yet">
+          Try a different level or word type from the home screen.
+        </InfoCard>
+        <View style={styles.summaryActions}>
+          <PrimaryButton title="Show All Cards" onPress={handleShowAllCards} />
+          <PrimaryButton title="Back Home" variant="secondary" onPress={() => navigation.navigate('Home')} />
         </View>
-      </ScreenContainer>
+      </AppShell>
     );
   }
 
   if (isFinished) {
     return (
-      <ScreenContainer>
-        <View style={styles.centered}>
-          <Text style={styles.title}>Quiz complete</Text>
+      <AppShell>
+        <InfoCard title="Quiz complete">
           <Text style={styles.summaryValue}>
             {sessionCorrectCount} / {quizFlashcards.length}
           </Text>
-          <Text style={styles.subtitle}>Great effort this round</Text>
           <Text style={styles.summaryLabel}>Accuracy: {sessionAccuracy}%</Text>
           <Text style={styles.summaryLabel}>Cards waiting for review: {mistakeCount}</Text>
-          <Text style={styles.summaryNote}>
-            Every answer helps you remember the next one faster.
-          </Text>
-          <View style={styles.summaryActions}>
-            <PrimaryButton title="Try Another Round" onPress={handleRestartQuiz} />
-          </View>
+          <Text style={styles.summaryNote}>Every answer helps you remember the next one faster.</Text>
+        </InfoCard>
+        <View style={styles.summaryActions}>
+          <PrimaryButton title="Try Another Round" onPress={handleRestartQuiz} />
         </View>
-      </ScreenContainer>
+      </AppShell>
     );
   }
 
   return (
-    <ScreenContainer>
-      <Text style={styles.progress}>
-        Question {currentIndex + 1} / {quizFlashcards.length}
-      </Text>
-      <View style={styles.badgeRow}>
-        <Text style={styles.difficultyBadge}>{selectedQuizDifficulty} mode</Text>
-        <Text style={styles.scopeBadge}>{selectedQuizScope}</Text>
-        <Text style={styles.scopeBadge}>{selectedStudyMode}</Text>
-        <Text style={styles.typeBadge}>
-          {selectedPartOfSpeech === 'All' ? currentCard.partOfSpeech : selectedPartOfSpeech}
-        </Text>
-      </View>
-      <Text style={styles.title}>Pick the best match</Text>
-      <Animated.View
-        style={{
-          opacity: fadeAnim,
-          transform: [{ translateY: liftAnim }],
-        }}
+    <AppShell>
+      <GradientHeader
+        title="Quiz"
+        left={<TopIconButton icon="chevron-back" label="Back" variant="ghost" onPress={() => navigation.goBack()} />}
+        right={<TopIconButton icon="volume-high-outline" label="Audio" variant="ghost" onPress={handleSpeakKorean} />}
+        minHeight={260}
       >
-        <View style={styles.promptCard}>
-          <Text style={styles.promptText}>{currentCard.korean}</Text>
-          <View style={styles.promptActions}>
-            <PrimaryButton title="Hear Korean" variant="secondary" onPress={handleSpeakKorean} />
-          </View>
+        <View style={styles.badgeRow}>
+          <Text style={styles.difficultyBadge}>{selectedQuizDifficulty}</Text>
+          <Text style={styles.scopeBadge}>{selectedQuizScope}</Text>
+          <Text style={styles.scopeBadge}>{selectedStudyMode}</Text>
+          <Text style={styles.scopeBadge}>
+            {selectedPartOfSpeech === 'All' ? currentCard.partOfSpeech : selectedPartOfSpeech}
+          </Text>
         </View>
-      </Animated.View>
+        <Animated.View
+          style={[
+            styles.promptShell,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: liftAnim }],
+            },
+          ]}
+        >
+          <Text style={styles.progress}>
+            Question {currentIndex + 1} / {quizFlashcards.length}
+          </Text>
+          <Text style={styles.promptText}>{currentCard.korean}</Text>
+        </Animated.View>
+      </GradientHeader>
 
       <View style={styles.options}>
         {options.map((option) => (
@@ -226,7 +229,7 @@ export default function QuizScreen({ navigation }) {
       </View>
 
       {feedback ? (
-        <View>
+        <InfoCard>
           <Text style={styles.feedback}>{feedback}</Text>
           {example ? (
             <View style={styles.exampleCard}>
@@ -238,24 +241,13 @@ export default function QuizScreen({ navigation }) {
           <View style={styles.feedbackAction}>
             <PrimaryButton title="Hear Answer" variant="secondary" onPress={handleSpeakEnglish} />
           </View>
-        </View>
+        </InfoCard>
       ) : null}
-    </ScreenContainer>
+    </AppShell>
   );
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 20,
-  },
-  progress: {
-    fontSize: 14,
-    color: colors.textSoft,
-    marginBottom: 10,
-  },
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -271,71 +263,35 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
   },
-  typeBadge: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.primaryDark,
-    backgroundColor: '#ffe0d1',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
   scopeBadge: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.text,
-    backgroundColor: colors.cardAlt,
+    color: colors.white,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
   },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textSoft,
-    textAlign: 'center',
+  promptShell: {
+    backgroundColor: colors.white,
+    borderRadius: tokens.radius.panelMd,
+    padding: tokens.spacing.lg,
+    marginTop: tokens.spacing.md,
+    ...tokens.shadow.card,
   },
-  summaryValue: {
-    fontSize: 40,
-    fontWeight: '700',
-    color: colors.primaryDark,
+  progress: {
+    fontSize: tokens.type.caption,
+    color: colors.textSoft,
     marginBottom: 8,
   },
-  summaryLabel: {
-    fontSize: 16,
-    color: colors.primaryDark,
-    marginTop: 12,
-  },
-  summaryNote: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.textSoft,
-    textAlign: 'center',
-    marginTop: 10,
-  },
-  summaryActions: {
-    width: '100%',
-    marginTop: 24,
-  },
-  promptCard: {
-    backgroundColor: colors.card,
-    borderRadius: 24,
-    padding: 30,
-    alignItems: 'center',
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: colors.backgroundAccent,
-  },
   promptText: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 34,
+    lineHeight: 42,
+    fontWeight: '800',
     color: colors.text,
   },
-  promptActions: {
-    width: '100%',
-    marginTop: 18,
-  },
   options: {
-    marginBottom: 20,
+    marginTop: tokens.spacing.lg,
   },
   feedback: {
     fontSize: 16,
@@ -376,10 +332,27 @@ const styles = StyleSheet.create({
     color: colors.textSoft,
     textAlign: 'center',
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+  summaryValue: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: colors.primaryDark,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  summaryLabel: {
+    fontSize: 16,
+    color: colors.primaryDark,
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  summaryNote: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.textSoft,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  summaryActions: {
+    marginTop: 24,
   },
 });

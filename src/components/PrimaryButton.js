@@ -1,13 +1,16 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 import colors from '../theme/colors';
+import tokens from '../theme/tokens';
 
 export default function PrimaryButton({ title, onPress, variant = 'primary' }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
+      style={({ pressed, hovered, focused }) => [
         styles.button,
         variant === 'secondary' ? styles.secondaryButton : styles.primaryButton,
+        hovered && styles.hovered,
+        focused && styles.focused,
         pressed && styles.pressed,
       ]}
     >
@@ -25,34 +28,40 @@ export default function PrimaryButton({ title, onPress, variant = 'primary' }) {
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 18,
+    borderRadius: tokens.radius.button,
     paddingHorizontal: 18,
-    paddingVertical: 15,
+    paddingVertical: 16,
     marginBottom: 12,
     alignItems: 'center',
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 16,
-    elevation: 2,
+    ...tokens.shadow.card,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.secondary,
   },
   secondaryButton: {
     backgroundColor: colors.cardAlt,
+    borderWidth: 1,
+    borderColor: colors.backgroundAccent,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: tokens.type.body,
+    fontWeight: '700',
   },
   primaryLabel: {
-    color: colors.white,
+    color: colors.text,
   },
   secondaryLabel: {
     color: colors.text,
   },
   pressed: {
-    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+  hovered: {
+    shadowRadius: 36,
+    elevation: 4,
+  },
+  focused: {
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
 });

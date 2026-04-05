@@ -1,19 +1,23 @@
+import tokens from './tokens';
+
 const colors = {
-  background: '#fff7ef',
-  backgroundAccent: '#ffe7cc',
-  card: '#fffdf9',
-  cardAlt: '#fff1dc',
-  primary: '#ff8a5b',
-  primaryDark: '#d95d39',
-  secondary: '#ffd166',
-  secondaryDark: '#8c5a00',
-  mint: '#7bdcb5',
-  mintDark: '#17795d',
-  lavender: '#d9ccff',
-  text: '#3b2f2f',
-  textSoft: '#7b6661',
-  white: '#ffffff',
-  shadow: 'rgba(170, 120, 70, 0.14)',
+  background: tokens.colors.background,
+  backgroundAccent: tokens.colors.borderSoft,
+  card: tokens.colors.surface,
+  cardAlt: tokens.colors.softSurface,
+  softSurface: tokens.colors.softSurface,
+  primary: tokens.colors.primaryBlueEnd,
+  primaryDark: tokens.colors.primaryBlueStart,
+  secondary: tokens.colors.accentYellow,
+  secondaryDark: tokens.colors.accentOrange,
+  mint: '#EAF8F0',
+  mintDark: '#2D9B61',
+  lavender: tokens.colors.lavenderCard,
+  beige: tokens.colors.beigeCard,
+  text: tokens.colors.textPrimary,
+  textSoft: tokens.colors.textSecondary,
+  white: tokens.colors.white,
+  shadow: tokens.colors.shadow,
 };
 
 export default colors;
