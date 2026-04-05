@@ -8,6 +8,7 @@ import {
   disableDailyReminder,
   enableDailyReminder,
   getReminderTimeLabel,
+  sendTestNotification,
 } from '../utils/notifications';
 
 export default function GoalsScreen() {
@@ -65,6 +66,17 @@ export default function GoalsScreen() {
     await disableDailyReminder();
     changeReminderEnabled(false);
     setStatusMessage('Daily reminders are paused for now.');
+  };
+
+  const handleTestReminder = async () => {
+    const result = await sendTestNotification(selectedGoalTarget);
+
+    if (!result.granted) {
+      setStatusMessage('Notifications need permission before the test reminder can appear.');
+      return;
+    }
+
+    setStatusMessage('Test reminder scheduled. It should appear on your device in a couple of seconds.');
   };
 
   return (
@@ -126,6 +138,7 @@ export default function GoalsScreen() {
         title={reminderEnabled ? 'Refresh Daily Reminder' : 'Turn On Daily Reminder'}
         onPress={handleEnableReminder}
       />
+      <PrimaryButton title="Test Notification Now" onPress={handleTestReminder} />
       <PrimaryButton
         title="Turn Off Reminder"
         variant="secondary"

@@ -4,6 +4,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import ScreenContainer from '../components/ScreenContainer';
 import { useFlashcards } from '../context/FlashcardContext';
 import colors from '../theme/colors';
+import { getExampleSentence } from '../utils/examples';
 import { speakText } from '../utils/pronunciation';
 
 function shuffleItems(items) {
@@ -21,8 +22,15 @@ function shuffleItems(items) {
 }
 
 export default function QuizScreen() {
-  const { quizFlashcards, saveQuizResult, selectedQuizDifficulty, selectedPartOfSpeech, selectedQuizScope } =
-    useFlashcards();
+  const {
+    quizFlashcards,
+    saveQuizResult,
+    mistakeCount,
+    selectedQuizDifficulty,
+    selectedPartOfSpeech,
+    selectedQuizScope,
+    selectedStudyMode,
+  } = useFlashcards();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [sessionResults, setSessionResults] = useState([]);
@@ -31,6 +39,7 @@ export default function QuizScreen() {
 
   const currentCard = quizFlashcards[currentIndex];
   const isFinished = currentIndex >= quizFlashcards.length;
+  const example = currentCard ? getExampleSentence(currentCard) : null;
   const optionCount = useMemo(() => {
     if (selectedQuizDifficulty === 'Hard') {
       return 6;
@@ -96,7 +105,7 @@ export default function QuizScreen() {
 
   const handleAnswer = (selectedAnswer) => {
     const isCorrect = selectedAnswer === currentCard.english;
-    saveQuizResult(isCorrect);
+    saveQuizResult(currentCard.id, isCorrect);
     setSessionResults((currentResults) => [...currentResults, isCorrect]);
     setFeedback(
       isCorrect
@@ -145,6 +154,7 @@ export default function QuizScreen() {
           </Text>
           <Text style={styles.subtitle}>Great effort this round</Text>
           <Text style={styles.summaryLabel}>Accuracy: {sessionAccuracy}%</Text>
+          <Text style={styles.summaryLabel}>Cards waiting for review: {mistakeCount}</Text>
           <Text style={styles.summaryNote}>
             Every answer helps you remember the next one faster.
           </Text>
@@ -164,6 +174,7 @@ export default function QuizScreen() {
       <View style={styles.badgeRow}>
         <Text style={styles.difficultyBadge}>{selectedQuizDifficulty} mode</Text>
         <Text style={styles.scopeBadge}>{selectedQuizScope}</Text>
+        <Text style={styles.scopeBadge}>{selectedStudyMode}</Text>
         <Text style={styles.typeBadge}>
           {selectedPartOfSpeech === 'All' ? currentCard.partOfSpeech : selectedPartOfSpeech}
         </Text>
@@ -197,6 +208,13 @@ export default function QuizScreen() {
       {feedback ? (
         <View>
           <Text style={styles.feedback}>{feedback}</Text>
+          {example ? (
+            <View style={styles.exampleCard}>
+              <Text style={styles.exampleTitle}>Example sentence</Text>
+              <Text style={styles.exampleSentence}>{example.sentence}</Text>
+              <Text style={styles.exampleHint}>{example.hint}</Text>
+            </View>
+          ) : null}
           <View style={styles.feedbackAction}>
             <PrimaryButton title="Hear Answer" variant="secondary" onPress={handleSpeakEnglish} />
           </View>
@@ -311,6 +329,32 @@ const styles = StyleSheet.create({
   },
   feedbackAction: {
     marginTop: 10,
+  },
+  exampleCard: {
+    marginTop: 10,
+    backgroundColor: colors.cardAlt,
+    borderRadius: 18,
+    padding: 14,
+  },
+  exampleTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primaryDark,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  exampleSentence: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  exampleHint: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.textSoft,
+    textAlign: 'center',
   },
   centered: {
     flex: 1,

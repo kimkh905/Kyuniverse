@@ -12,9 +12,12 @@ export default function ProgressScreen({ navigation }) {
     resetProgress,
     selectedLevel,
     selectedPartOfSpeech,
+    selectedStudyMode,
+    searchQuery,
     levelKnownCount,
     favoriteCardIds,
     favoriteCount,
+    mistakeCount,
     selectedGoalTarget,
     goalProgressCount,
     remainingGoalCount,
@@ -35,8 +38,9 @@ export default function ProgressScreen({ navigation }) {
     <ScreenContainer>
       <Text style={styles.title}>Your Progress</Text>
       <Text style={styles.subtitle}>
-        Current filters: {selectedLevel} / {selectedPartOfSpeech}
+        Current filters: {selectedLevel} / {selectedPartOfSpeech} / {selectedStudyMode}
       </Text>
+      {searchQuery ? <Text style={styles.subtitle}>Search: "{searchQuery}"</Text> : null}
       <View style={styles.cheerCard}>
         <Text style={styles.cheerTitle}>You are building this little by little</Text>
         <Text style={styles.cheerText}>Even a few cards a day adds up faster than it feels.</Text>
@@ -101,6 +105,10 @@ export default function ProgressScreen({ navigation }) {
         <View style={styles.statCard}>
           <Text style={styles.statValue}>{correctCount}</Text>
           <Text style={styles.statLabel}>Correct answers</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{mistakeCount}</Text>
+          <Text style={styles.statLabel}>Needs review</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statValue}>

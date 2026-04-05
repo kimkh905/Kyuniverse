@@ -59,6 +59,34 @@ export async function disableDailyReminder() {
   await Notifications.cancelAllScheduledNotificationsAsync();
 }
 
+export async function sendTestNotification(goalTarget) {
+  const permissions = await Notifications.getPermissionsAsync();
+  let finalStatus = permissions.status;
+
+  if (finalStatus !== 'granted') {
+    const request = await Notifications.requestPermissionsAsync();
+    finalStatus = request.status;
+  }
+
+  if (finalStatus !== 'granted') {
+    return { granted: false };
+  }
+
+  const identifier = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Quick practice check',
+      body: `Do this now to become one step closer to your ${goalTarget}-word goal.`,
+      sound: false,
+    },
+    trigger: {
+      seconds: 2,
+      channelId: 'daily-reminders',
+    },
+  });
+
+  return { granted: true, identifier };
+}
+
 export function getReminderTimeLabel() {
   return '8:00 PM';
 }

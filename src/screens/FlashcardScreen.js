@@ -4,6 +4,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import ScreenContainer from '../components/ScreenContainer';
 import { useFlashcards } from '../context/FlashcardContext';
 import colors from '../theme/colors';
+import { getExampleSentence } from '../utils/examples';
 import { speakText } from '../utils/pronunciation';
 
 function createDefaultOrder(length) {
@@ -25,8 +26,16 @@ function createShuffledOrder(length, pinnedIndex) {
 }
 
 export default function FlashcardScreen() {
-  const { flashcards, markCardKnown, favoriteCardIds, toggleFavoriteCard, selectedPartOfSpeech } =
-    useFlashcards();
+  const {
+    flashcards,
+    markCardKnown,
+    favoriteCardIds,
+    mistakeCardIds,
+    clearMistakeCard,
+    toggleFavoriteCard,
+    selectedPartOfSpeech,
+    selectedStudyMode,
+  } = useFlashcards();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -59,6 +68,8 @@ export default function FlashcardScreen() {
   const currentCard = filteredCards[activeCardIndex];
   const isLastCard = currentIndex === cardOrder.length - 1;
   const isFavorite = currentCard ? favoriteCardIds.includes(currentCard.id) : false;
+  const isInMistakeReview = currentCard ? mistakeCardIds.includes(currentCard.id) : false;
+  const example = currentCard ? getExampleSentence(currentCard) : null;
 
   const progressLabel = useMemo(
     () => `${currentIndex + 1} / ${cardOrder.length}`,
@@ -224,7 +235,7 @@ export default function FlashcardScreen() {
           </Pressable>
         </View>
         <Text style={styles.searchMeta}>
-          {filteredCards.length} card{filteredCards.length === 1 ? '' : 's'} ready in {selectedPartOfSpeech}.
+          {filteredCards.length} card{filteredCards.length === 1 ? '' : 's'} ready in {selectedPartOfSpeech} with {selectedStudyMode}.
         </Text>
       </View>
 
@@ -247,6 +258,9 @@ export default function FlashcardScreen() {
       <Text style={styles.typeBadge}>
         {selectedPartOfSpeech === 'All' ? currentCard.partOfSpeech : selectedPartOfSpeech}
       </Text>
+      {isInMistakeReview ? (
+        <Text style={styles.reviewBadge}>Needs review</Text>
+      ) : null}
 
       <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
         <Pressable style={styles.card} onPress={() => setShowEnglish((current) => !current)}>
@@ -265,6 +279,13 @@ export default function FlashcardScreen() {
           <Text style={styles.direction}>{showEnglish ? 'English' : 'Korean'}</Text>
           <Text style={styles.word}>{showEnglish ? currentCard.english : currentCard.korean}</Text>
           <Text style={styles.hint}>Tap to flip and keep going</Text>
+          {showEnglish && example ? (
+            <View style={styles.exampleCard}>
+              <Text style={styles.exampleTitle}>Example sentence</Text>
+              <Text style={styles.exampleSentence}>{example.sentence}</Text>
+              <Text style={styles.exampleHint}>{example.hint}</Text>
+            </View>
+          ) : null}
           <Pressable onPress={handleSpeakCurrent} style={styles.speakButton}>
             <Text style={styles.speakLabel}>Hear it</Text>
           </Pressable>
@@ -288,6 +309,9 @@ export default function FlashcardScreen() {
 
       <View style={styles.actions}>
         <PrimaryButton title="I Know This" onPress={handleMarkKnown} />
+        {isInMistakeReview ? (
+          <PrimaryButton title="Clear From Review" variant="secondary" onPress={() => clearMistakeCard(currentCard.id)} />
+        ) : null}
       </View>
 
       <View style={styles.browserSection}>
@@ -428,6 +452,17 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     marginBottom: 14,
   },
+  reviewBadge: {
+    alignSelf: 'flex-start',
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.mintDark,
+    backgroundColor: colors.mint,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginBottom: 14,
+  },
   card: {
     flex: 1,
     backgroundColor: colors.card,
@@ -476,6 +511,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primaryDark,
     textAlign: 'center',
+  },
+  exampleCard: {
+    marginTop: 16,
+    borderRadius: 18,
+    backgroundColor: colors.cardAlt,
+    padding: 14,
+    width: '100%',
+  },
+  exampleTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primaryDark,
+    marginBottom: 6,
+    textAlign: 'left',
+  },
+  exampleSentence: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.text,
+    textAlign: 'left',
+    marginBottom: 6,
+  },
+  exampleHint: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.textSoft,
+    textAlign: 'left',
   },
   speakButton: {
     marginTop: 16,

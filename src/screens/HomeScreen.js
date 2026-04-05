@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import PrimaryButton from '../components/PrimaryButton';
 import ScreenContainer from '../components/ScreenContainer';
 import { useFlashcards } from '../context/FlashcardContext';
 import colors from '../theme/colors';
+import { getExampleSentence } from '../utils/examples';
 import { speakText } from '../utils/pronunciation';
 
 function getDayOfYear() {
@@ -25,6 +26,12 @@ export default function HomeScreen({ navigation }) {
     partsOfSpeech,
     selectedPartOfSpeech,
     changePartOfSpeech,
+    studyModes,
+    selectedStudyMode,
+    changeStudyMode,
+    searchQuery,
+    changeSearchQuery,
+    clearSearchQuery,
     quizDifficulties,
     selectedQuizDifficulty,
     changeQuizDifficulty,
@@ -53,6 +60,7 @@ export default function HomeScreen({ navigation }) {
     const dailyIndex = getDayOfYear() % allFlashcards.length;
     return allFlashcards[dailyIndex];
   }, [allFlashcards]);
+  const dailyWordExample = dailyWord ? getExampleSentence(dailyWord) : null;
 
   useEffect(() => {
     Animated.parallel([
@@ -87,6 +95,30 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.title}>Learn Korean and English with a smile</Text>
           <Text style={styles.subtitle}>
             Flip through playful flashcards, try a low-pressure quiz, and celebrate your progress.
+          </Text>
+        </View>
+
+        <View style={styles.searchCard}>
+          <Text style={styles.searchTitle}>Find the right study set</Text>
+          <View style={styles.searchInputWrap}>
+            <TextInput
+              value={searchQuery}
+              onChangeText={changeSearchQuery}
+              placeholder="Search by Korean, English, level, or word type"
+              placeholderTextColor={colors.textSoft}
+              style={styles.searchInput}
+            />
+            {searchQuery ? (
+              <Pressable
+                onPress={clearSearchQuery}
+                style={({ pressed }) => [styles.searchClearButton, pressed && styles.levelChipPressed]}
+              >
+                <Text style={styles.searchClearLabel}>Clear</Text>
+              </Pressable>
+            ) : null}
+          </View>
+          <Text style={styles.searchMeta}>
+            {flashcards.length} cards match your current filters.
           </Text>
         </View>
 
@@ -127,6 +159,11 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.dailyWordText}>
               A tiny win for today: hear it, say it once, and try spotting it again later.
             </Text>
+            <View style={styles.exampleCard}>
+              <Text style={styles.exampleTitle}>Example sentence</Text>
+              <Text style={styles.exampleSentence}>{dailyWordExample.sentence}</Text>
+              <Text style={styles.exampleHint}>{dailyWordExample.hint}</Text>
+            </View>
 
             <View style={styles.dailyWordActions}>
               <Pressable
@@ -187,6 +224,32 @@ export default function HomeScreen({ navigation }) {
               ? 'All word types are active right now.'
               : `${selectedPartOfSpeech}s are active right now.`}
           </Text>
+        </View>
+
+        <View style={styles.levelSection}>
+          <Text style={styles.levelTitle}>Study focus</Text>
+          <View style={styles.levelList}>
+            {studyModes.map((studyMode) => (
+              <Pressable
+                key={studyMode}
+                onPress={() => changeStudyMode(studyMode)}
+                style={({ pressed }) => [
+                  styles.levelChip,
+                  selectedStudyMode === studyMode && styles.levelChipActive,
+                  pressed && styles.levelChipPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.levelChipLabel,
+                    selectedStudyMode === studyMode && styles.levelChipLabelActive,
+                  ]}
+                >
+                  {studyMode}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
 
         <View style={styles.levelSection}>
@@ -372,6 +435,50 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 22,
   },
+  searchCard: {
+    backgroundColor: colors.cardAlt,
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 22,
+  },
+  searchTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 10,
+  },
+  searchInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.backgroundAccent,
+  },
+  searchClearButton: {
+    borderRadius: 999,
+    backgroundColor: colors.lavender,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  searchClearLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  searchMeta: {
+    fontSize: 13,
+    color: colors.textSoft,
+    marginTop: 10,
+  },
   dailyWordCard: {
     backgroundColor: '#fff4d8',
     borderRadius: 24,
@@ -423,6 +530,29 @@ const styles = StyleSheet.create({
   dailyWordText: {
     fontSize: 14,
     lineHeight: 20,
+    color: colors.textSoft,
+  },
+  exampleCard: {
+    marginTop: 14,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    padding: 14,
+  },
+  exampleTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primaryDark,
+    marginBottom: 6,
+  },
+  exampleSentence: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.text,
+    marginBottom: 6,
+  },
+  exampleHint: {
+    fontSize: 13,
+    lineHeight: 18,
     color: colors.textSoft,
   },
   dailyWordActions: {

@@ -9,6 +9,7 @@ const DEFAULT_GOAL_TARGET = 20;
 const quizDifficulties = ['Easy', 'Medium', 'Hard'];
 const quizScopes = ['Current Filters', 'Word Type Only'];
 const goalTargets = [10, 20, 30, 50];
+const studyModes = ['All Cards', 'Needs Review', 'Unlearned', 'Bookmarked'];
 
 function getTodayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -36,12 +37,80 @@ function calculateStreak(activityByDate) {
   return streak;
 }
 
+function normalizeText(text) {
+  return String(text ?? '').trim().toLowerCase();
+}
+
+function matchesSearch(card, query) {
+  if (!query) {
+    return true;
+  }
+
+  return [card.korean, card.english, card.level, card.partOfSpeech].some((value) =>
+    normalizeText(value).includes(query)
+  );
+}
+
+function createEmptyCardStats(cardId) {
+  return {
+    cardId,
+    seenCount: 0,
+    correctCount: 0,
+    incorrectCount: 0,
+    knownCount: 0,
+    lastStudiedAt: null,
+    lastIncorrectAt: null,
+    lastKnownAt: null,
+  };
+}
+
+function getCardStats(cardStatsById, cardId) {
+  return cardStatsById[cardId] ?? createEmptyCardStats(cardId);
+}
+
+function sortByStudyPriority(cards, cardStatsById, knownCardIds, favoriteCardIds, mistakeCardIds) {
+  return [...cards].sort((leftCard, rightCard) => {
+    const leftStats = getCardStats(cardStatsById, leftCard.id);
+    const rightStats = getCardStats(cardStatsById, rightCard.id);
+
+    const leftScore =
+      (mistakeCardIds.includes(leftCard.id) ? 20 : 0) +
+      (!knownCardIds.includes(leftCard.id) ? 8 : 0) +
+      (favoriteCardIds.includes(leftCard.id) ? 4 : 0) +
+      leftStats.incorrectCount * 3 -
+      leftStats.correctCount;
+    const rightScore =
+      (mistakeCardIds.includes(rightCard.id) ? 20 : 0) +
+      (!knownCardIds.includes(rightCard.id) ? 8 : 0) +
+      (favoriteCardIds.includes(rightCard.id) ? 4 : 0) +
+      rightStats.incorrectCount * 3 -
+      rightStats.correctCount;
+
+    if (rightScore !== leftScore) {
+      return rightScore - leftScore;
+    }
+
+    const leftLastStudied = leftStats.lastStudiedAt ? new Date(leftStats.lastStudiedAt).getTime() : 0;
+    const rightLastStudied = rightStats.lastStudiedAt ? new Date(rightStats.lastStudiedAt).getTime() : 0;
+
+    if (leftLastStudied !== rightLastStudied) {
+      return leftLastStudied - rightLastStudied;
+    }
+
+    return Number(leftCard.id) - Number(rightCard.id);
+  });
+}
+
 export function FlashcardProvider({ children }) {
   const [knownCardIds, setKnownCardIds] = useState([]);
   const [favoriteCardIds, setFavoriteCardIds] = useState([]);
+  const [mistakeCardIds, setMistakeCardIds] = useState([]);
+  const [cardStatsById, setCardStatsById] = useState({});
   const [quizResults, setQuizResults] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState('All');
   const [selectedPartOfSpeech, setSelectedPartOfSpeech] = useState('All');
+  const [selectedStudyMode, setSelectedStudyMode] = useState('All Cards');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedQuizDifficulty, setSelectedQuizDifficulty] = useState('Easy');
   const [selectedQuizScope, setSelectedQuizScope] = useState('Current Filters');
   const [dailyGoal] = useState(DEFAULT_DAILY_GOAL);
@@ -71,6 +140,18 @@ export function FlashcardProvider({ children }) {
           setFavoriteCardIds(parsedProgress.favoriteCardIds);
         }
 
+        if (Array.isArray(parsedProgress.mistakeCardIds)) {
+          setMistakeCardIds(parsedProgress.mistakeCardIds);
+        }
+
+        if (
+          parsedProgress.cardStatsById &&
+          typeof parsedProgress.cardStatsById === 'object' &&
+          !Array.isArray(parsedProgress.cardStatsById)
+        ) {
+          setCardStatsById(parsedProgress.cardStatsById);
+        }
+
         if (Array.isArray(parsedProgress.quizResults)) {
           setQuizResults(parsedProgress.quizResults);
         }
@@ -81,6 +162,17 @@ export function FlashcardProvider({ children }) {
 
         if (typeof parsedProgress.selectedPartOfSpeech === 'string') {
           setSelectedPartOfSpeech(parsedProgress.selectedPartOfSpeech);
+        }
+
+        if (
+          typeof parsedProgress.selectedStudyMode === 'string' &&
+          studyModes.includes(parsedProgress.selectedStudyMode)
+        ) {
+          setSelectedStudyMode(parsedProgress.selectedStudyMode);
+        }
+
+        if (typeof parsedProgress.searchQuery === 'string') {
+          setSearchQuery(parsedProgress.searchQuery);
         }
 
         if (
@@ -143,9 +235,13 @@ export function FlashcardProvider({ children }) {
           JSON.stringify({
             knownCardIds,
             favoriteCardIds,
+            mistakeCardIds,
+            cardStatsById,
             quizResults,
             selectedLevel,
             selectedPartOfSpeech,
+            selectedStudyMode,
+            searchQuery,
             selectedQuizDifficulty,
             selectedQuizScope,
             selectedGoalTarget,
@@ -161,35 +257,74 @@ export function FlashcardProvider({ children }) {
     persistProgress();
   }, [
     activityByDate,
+    cardStatsById,
     favoriteCardIds,
     isHydrated,
     knownCardIds,
+    mistakeCardIds,
     reminderEnabled,
     quizResults,
+    searchQuery,
     selectedGoalTarget,
     selectedLevel,
     selectedPartOfSpeech,
     selectedQuizDifficulty,
     selectedQuizScope,
+    selectedStudyMode,
   ]);
 
+  const normalizedSearchQuery = normalizeText(searchQuery);
   const filteredByLevel =
     selectedLevel === 'All' ? flashcards : flashcards.filter((card) => card.level === selectedLevel);
-
-  const filteredFlashcards =
+  const filteredByWordType =
     selectedPartOfSpeech === 'All'
       ? filteredByLevel
       : filteredByLevel.filter((card) => card.partOfSpeech === selectedPartOfSpeech);
+  const filteredBySearch = filteredByWordType.filter((card) => matchesSearch(card, normalizedSearchQuery));
+  const studyFilteredFlashcards = filteredBySearch.filter((card) => {
+    if (selectedStudyMode === 'Needs Review') {
+      return mistakeCardIds.includes(card.id);
+    }
 
-  const quizFlashcards =
-    selectedQuizScope === 'Word Type Only'
-      ? selectedPartOfSpeech === 'All'
-        ? flashcards
-        : flashcards.filter((card) => card.partOfSpeech === selectedPartOfSpeech)
-      : filteredFlashcards;
+    if (selectedStudyMode === 'Unlearned') {
+      return !knownCardIds.includes(card.id);
+    }
 
-  const levelKnownCount = filteredFlashcards.filter((card) => knownCardIds.includes(card.id)).length;
-  const favoriteCount = filteredFlashcards.filter((card) => favoriteCardIds.includes(card.id)).length;
+    if (selectedStudyMode === 'Bookmarked') {
+      return favoriteCardIds.includes(card.id);
+    }
+
+    return true;
+  });
+
+  const orderedFlashcards = sortByStudyPriority(
+    studyFilteredFlashcards,
+    cardStatsById,
+    knownCardIds,
+    favoriteCardIds,
+    mistakeCardIds
+  );
+
+  const wordTypeQuizBase =
+    selectedPartOfSpeech === 'All'
+      ? flashcards
+      : flashcards.filter((card) => card.partOfSpeech === selectedPartOfSpeech);
+  const wordTypeQuizSearchFiltered = wordTypeQuizBase.filter((card) =>
+    matchesSearch(card, normalizedSearchQuery)
+  );
+  const quizBaseCards =
+    selectedQuizScope === 'Word Type Only' ? wordTypeQuizSearchFiltered : studyFilteredFlashcards;
+  const quizFlashcards = sortByStudyPriority(
+    quizBaseCards,
+    cardStatsById,
+    knownCardIds,
+    favoriteCardIds,
+    mistakeCardIds
+  );
+
+  const levelKnownCount = studyFilteredFlashcards.filter((card) => knownCardIds.includes(card.id)).length;
+  const favoriteCount = studyFilteredFlashcards.filter((card) => favoriteCardIds.includes(card.id)).length;
+  const mistakeCount = studyFilteredFlashcards.filter((card) => mistakeCardIds.includes(card.id)).length;
   const goalProgressCount = Math.min(knownCardIds.length, selectedGoalTarget);
   const remainingGoalCount = Math.max(selectedGoalTarget - knownCardIds.length, 0);
   const isGoalComplete = knownCardIds.length >= selectedGoalTarget;
@@ -203,6 +338,22 @@ export function FlashcardProvider({ children }) {
     }));
   };
 
+  const updateCardStats = (cardId, buildNextStats) => {
+    setCardStatsById((currentStats) => {
+      const existingStats = getCardStats(currentStats, cardId);
+      const nextStats = buildNextStats(existingStats, new Date().toISOString());
+
+      return {
+        ...currentStats,
+        [cardId]: {
+          ...existingStats,
+          ...nextStats,
+          cardId,
+        },
+      };
+    });
+  };
+
   const markCardKnown = (cardId) => {
     trackDailyActivity();
 
@@ -213,11 +364,43 @@ export function FlashcardProvider({ children }) {
 
       return [...currentIds, cardId];
     });
+
+    setMistakeCardIds((currentIds) => currentIds.filter((currentId) => currentId !== cardId));
+
+    updateCardStats(cardId, (existingStats, now) => ({
+      knownCount: existingStats.knownCount + 1,
+      lastKnownAt: now,
+      lastStudiedAt: now,
+    }));
   };
 
-  const saveQuizResult = (isCorrect) => {
+  const saveQuizResult = (cardId, isCorrect) => {
     trackDailyActivity();
     setQuizResults((currentResults) => [...currentResults, isCorrect]);
+
+    updateCardStats(cardId, (existingStats, now) => ({
+      seenCount: existingStats.seenCount + 1,
+      correctCount: existingStats.correctCount + (isCorrect ? 1 : 0),
+      incorrectCount: existingStats.incorrectCount + (isCorrect ? 0 : 1),
+      lastIncorrectAt: isCorrect ? existingStats.lastIncorrectAt : now,
+      lastStudiedAt: now,
+    }));
+
+    if (isCorrect) {
+      return;
+    }
+
+    setMistakeCardIds((currentIds) => {
+      if (currentIds.includes(cardId)) {
+        return currentIds;
+      }
+
+      return [...currentIds, cardId];
+    });
+  };
+
+  const clearMistakeCard = (cardId) => {
+    setMistakeCardIds((currentIds) => currentIds.filter((currentId) => currentId !== cardId));
   };
 
   const toggleFavoriteCard = (cardId) => {
@@ -231,6 +414,8 @@ export function FlashcardProvider({ children }) {
   const resetProgress = () => {
     setKnownCardIds([]);
     setFavoriteCardIds([]);
+    setMistakeCardIds([]);
+    setCardStatsById({});
     setQuizResults([]);
     setActivityByDate({});
   };
@@ -241,6 +426,18 @@ export function FlashcardProvider({ children }) {
 
   const changePartOfSpeech = (partOfSpeech) => {
     setSelectedPartOfSpeech(partOfSpeech);
+  };
+
+  const changeStudyMode = (studyMode) => {
+    setSelectedStudyMode(studyMode);
+  };
+
+  const changeSearchQuery = (query) => {
+    setSearchQuery(query);
+  };
+
+  const clearSearchQuery = () => {
+    setSearchQuery('');
   };
 
   const changeQuizDifficulty = (difficulty) => {
@@ -267,17 +464,20 @@ export function FlashcardProvider({ children }) {
 
   const value = useMemo(
     () => ({
-      flashcards: filteredFlashcards,
+      flashcards: orderedFlashcards,
       quizFlashcards,
       allFlashcards: flashcards,
       levels,
       partsOfSpeech,
+      studyModes,
       selectedLevel,
       selectedPartOfSpeech,
-      quizDifficulties,
+      selectedStudyMode,
+      searchQuery,
       selectedQuizDifficulty,
-      quizScopes,
       selectedQuizScope,
+      quizDifficulties,
+      quizScopes,
       goalTargets,
       selectedGoalTarget,
       goalProgressCount,
@@ -287,6 +487,9 @@ export function FlashcardProvider({ children }) {
       knownCardIds,
       favoriteCardIds,
       favoriteCount,
+      mistakeCardIds,
+      mistakeCount,
+      cardStatsById,
       quizResults,
       levelKnownCount,
       dailyGoal,
@@ -296,11 +499,15 @@ export function FlashcardProvider({ children }) {
       isDailyGoalComplete,
       isHydrated,
       markCardKnown,
-      toggleFavoriteCard,
       saveQuizResult,
+      clearMistakeCard,
+      toggleFavoriteCard,
       resetProgress,
       changeLevel,
       changePartOfSpeech,
+      changeStudyMode,
+      changeSearchQuery,
+      clearSearchQuery,
       changeQuizDifficulty,
       changeQuizScope,
       changeGoalTarget,
@@ -309,27 +516,31 @@ export function FlashcardProvider({ children }) {
     [
       dailyGoal,
       dailyGoalProgress,
-      filteredFlashcards,
       favoriteCardIds,
       favoriteCount,
       goalProgressCount,
-      goalTargets,
       isDailyGoalComplete,
       isGoalComplete,
       isHydrated,
       knownCardIds,
       levelKnownCount,
+      mistakeCardIds,
+      mistakeCount,
+      orderedFlashcards,
       quizFlashcards,
       quizResults,
       remainingGoalCount,
       reminderEnabled,
+      searchQuery,
       selectedGoalTarget,
       selectedLevel,
       selectedPartOfSpeech,
       selectedQuizDifficulty,
       selectedQuizScope,
+      selectedStudyMode,
       streakCount,
       todayProgress,
+      cardStatsById,
     ]
   );
 
