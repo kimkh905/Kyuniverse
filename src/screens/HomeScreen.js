@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import AppShell from '../components/AppShell';
 import Avatar from '../components/Avatar';
 import BottomNav from '../components/BottomNav';
@@ -15,7 +15,7 @@ const classAuthors = {
   Travel: { name: 'Hana Lee', role: 'Travel phrases' },
 };
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, onLogout }) {
   const { allFlashcards, levels, knownCardIds, rememberStudyScreen } = useFlashcards();
 
   const classCards = levels
@@ -54,9 +54,17 @@ export default function HomeScreen({ navigation }) {
     >
       <View style={styles.topBar}>
         <TopIconButton icon="grid-outline" label="Browse" />
-        <TopIconButton label="" onPress={() => navigation.navigate('Profile')}>
-          <Avatar label="K" size={52} shape="rounded" />
-        </TopIconButton>
+        <View style={styles.topActions}>
+          <Pressable
+            onPress={onLogout}
+            style={({ pressed }) => [styles.logoutButton, pressed && styles.logoutButtonPressed]}
+          >
+            <Text style={styles.logoutLabel}>Logout</Text>
+          </Pressable>
+          <TopIconButton label="" onPress={() => navigation.navigate('Profile')}>
+            <Avatar label="K" size={52} shape="rounded" />
+          </TopIconButton>
+        </View>
       </View>
 
       <Text style={styles.title}>Dashboard</Text>
@@ -93,6 +101,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: tokens.spacing.lg,
+  },
+  topActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.spacing.sm,
+  },
+  logoutButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.backgroundAccent,
+    ...tokens.shadow.card,
+  },
+  logoutButtonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  logoutLabel: {
+    fontSize: tokens.type.caption,
+    fontWeight: '700',
+    color: colors.text,
   },
   title: {
     fontSize: tokens.type.screenTitle,

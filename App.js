@@ -1,6 +1,6 @@
 import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import CelebrationBanner from './src/components/CelebrationBanner';
 import { FlashcardProvider } from './src/context/FlashcardContext';
@@ -11,10 +11,19 @@ import { configureNotifications } from './src/utils/notifications';
 
 function AppContent() {
   const { isHydrated, celebration, dismissCelebration } = useFlashcards();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     configureNotifications();
   }, []);
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
 
   if (!isHydrated) {
     return (
@@ -26,7 +35,11 @@ function AppContent() {
 
   return (
     <View style={styles.appShell}>
-      <AppNavigator />
+      <AppNavigator
+        isAuthenticated={isAuthenticated}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
+      />
       <CelebrationBanner celebration={celebration} onDismiss={dismissCelebration} />
     </View>
   );

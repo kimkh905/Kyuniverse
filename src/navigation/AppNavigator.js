@@ -5,6 +5,7 @@ import FlashcardScreen from '../screens/FlashcardScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LeaderboardScreen from '../screens/LeaderboardScreen';
+import LoginScreen from '../screens/LoginScreen';
 import PrivacyScreen from '../screens/PrivacyScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ProgressScreen from '../screens/ProgressScreen';
@@ -13,11 +14,11 @@ import colors from '../theme/colors';
 
 const Stack = createNativeStackNavigator();
 
-export default function AppNavigator() {
+export default function AppNavigator({ isAuthenticated, onLogin, onLogout }) {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Home"
+        initialRouteName={isAuthenticated ? 'Home' : 'Login'}
         screenOptions={{
           headerTitleAlign: 'center',
           contentStyle: { backgroundColor: colors.background },
@@ -30,15 +31,25 @@ export default function AppNavigator() {
           },
         }}
       >
-        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Leaderboard" component={LeaderboardScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="DeckDetail" component={DeckDetailScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Goals" component={GoalsScreen} options={{ title: 'Goals' }} />
-        <Stack.Screen name="Privacy" component={PrivacyScreen} options={{ title: 'Privacy & Data' }} />
-        <Stack.Screen name="Flashcards" component={FlashcardScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Quiz" component={QuizScreen} options={{ title: 'Quiz' }} />
-        <Stack.Screen name="Progress" component={ProgressScreen} options={{ headerShown: false }} />
+        {!isAuthenticated ? (
+          <Stack.Screen name="Login" options={{ headerShown: false }}>
+            {(props) => <LoginScreen {...props} onLogin={onLogin} />}
+          </Stack.Screen>
+        ) : (
+          <>
+            <Stack.Screen name="Home" options={{ headerShown: false }}>
+              {(props) => <HomeScreen {...props} onLogout={onLogout} />}
+            </Stack.Screen>
+            <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Leaderboard" component={LeaderboardScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="DeckDetail" component={DeckDetailScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Goals" component={GoalsScreen} options={{ title: 'Goals' }} />
+            <Stack.Screen name="Privacy" component={PrivacyScreen} options={{ title: 'Privacy & Data' }} />
+            <Stack.Screen name="Flashcards" component={FlashcardScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Quiz" component={QuizScreen} options={{ title: 'Quiz' }} />
+            <Stack.Screen name="Progress" component={ProgressScreen} options={{ headerShown: false }} />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
