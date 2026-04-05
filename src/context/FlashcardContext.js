@@ -116,6 +116,7 @@ export function FlashcardProvider({ children }) {
   const [dailyGoal] = useState(DEFAULT_DAILY_GOAL);
   const [selectedGoalTarget, setSelectedGoalTarget] = useState(DEFAULT_GOAL_TARGET);
   const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [showOnboardingTip, setShowOnboardingTip] = useState(true);
   const [activityByDate, setActivityByDate] = useState({});
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -200,6 +201,10 @@ export function FlashcardProvider({ children }) {
           setReminderEnabled(parsedProgress.reminderEnabled);
         }
 
+        if (typeof parsedProgress.showOnboardingTip === 'boolean') {
+          setShowOnboardingTip(parsedProgress.showOnboardingTip);
+        }
+
         if (
           parsedProgress.activityByDate &&
           typeof parsedProgress.activityByDate === 'object' &&
@@ -246,6 +251,7 @@ export function FlashcardProvider({ children }) {
             selectedQuizScope,
             selectedGoalTarget,
             reminderEnabled,
+            showOnboardingTip,
             activityByDate,
           })
         );
@@ -271,6 +277,7 @@ export function FlashcardProvider({ children }) {
     selectedQuizDifficulty,
     selectedQuizScope,
     selectedStudyMode,
+    showOnboardingTip,
   ]);
 
   const normalizedSearchQuery = normalizeText(searchQuery);
@@ -456,6 +463,14 @@ export function FlashcardProvider({ children }) {
     setReminderEnabled(enabled);
   };
 
+  const dismissOnboardingTip = () => {
+    setShowOnboardingTip(false);
+  };
+
+  const showOnboardingAgain = () => {
+    setShowOnboardingTip(true);
+  };
+
   const todayKey = getTodayKey();
   const todayProgress = activityByDate[todayKey] ?? 0;
   const dailyGoalProgress = Math.min(todayProgress, dailyGoal);
@@ -484,6 +499,7 @@ export function FlashcardProvider({ children }) {
       remainingGoalCount,
       isGoalComplete,
       reminderEnabled,
+      showOnboardingTip,
       knownCardIds,
       favoriteCardIds,
       favoriteCount,
@@ -512,6 +528,8 @@ export function FlashcardProvider({ children }) {
       changeQuizScope,
       changeGoalTarget,
       changeReminderEnabled,
+      dismissOnboardingTip,
+      showOnboardingAgain,
     }),
     [
       dailyGoal,
@@ -538,6 +556,7 @@ export function FlashcardProvider({ children }) {
       selectedQuizDifficulty,
       selectedQuizScope,
       selectedStudyMode,
+      showOnboardingTip,
       streakCount,
       todayProgress,
       cardStatsById,

@@ -45,6 +45,9 @@ export default function HomeScreen({ navigation }) {
     dailyGoal,
     todayProgress,
     streakCount,
+    showOnboardingTip,
+    dismissOnboardingTip,
+    showOnboardingAgain,
     selectedGoalTarget,
     goalProgressCount,
     remainingGoalCount,
@@ -108,6 +111,37 @@ export default function HomeScreen({ navigation }) {
             Flip through playful flashcards, try a low-pressure quiz, and celebrate your progress.
           </Text>
         </View>
+
+        {showOnboardingTip ? (
+          <View style={styles.onboardingCard}>
+            <Text style={styles.onboardingTitle}>Quick tour</Text>
+            <Text style={styles.onboardingText}>
+              Start with the daily word, use Needs Review when quiz misses pile up, set your goal in Goals,
+              and turn on reminders when you want a gentle push.
+            </Text>
+            <View style={styles.onboardingActions}>
+              <Pressable
+                style={({ pressed }) => [styles.onboardingPrimaryButton, pressed && styles.levelChipPressed]}
+                onPress={() => navigation.navigate('Goals')}
+              >
+                <Text style={styles.onboardingPrimaryLabel}>Open Goals</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.onboardingSecondaryButton, pressed && styles.levelChipPressed]}
+                onPress={dismissOnboardingTip}
+              >
+                <Text style={styles.onboardingSecondaryLabel}>Got it</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <Pressable
+            style={({ pressed }) => [styles.onboardingMiniLink, pressed && styles.levelChipPressed]}
+            onPress={showOnboardingAgain}
+          >
+            <Text style={styles.onboardingMiniLinkLabel}>Show quick tour again</Text>
+          </Pressable>
+        )}
 
         <View style={styles.searchCard}>
           <Text style={styles.searchTitle}>Find the right study set</Text>
@@ -469,6 +503,67 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginBottom: 22,
+  },
+  onboardingCard: {
+    backgroundColor: '#fff1dc',
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 22,
+    borderWidth: 2,
+    borderColor: colors.backgroundAccent,
+  },
+  onboardingTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  onboardingText: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: colors.textSoft,
+  },
+  onboardingActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 16,
+  },
+  onboardingPrimaryButton: {
+    flex: 1,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  onboardingPrimaryLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  onboardingSecondaryButton: {
+    flex: 1,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  onboardingSecondaryLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  onboardingMiniLink: {
+    alignSelf: 'flex-start',
+    marginBottom: 18,
+    borderRadius: 999,
+    backgroundColor: colors.cardAlt,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  onboardingMiniLinkLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
   },
   searchCard: {
     backgroundColor: colors.cardAlt,
