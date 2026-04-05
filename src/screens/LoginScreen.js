@@ -10,10 +10,12 @@ import {
 } from 'react-native';
 import ActionButton from '../components/ActionButton';
 import AppShell from '../components/AppShell';
-import GoogleLoginButton from '../components/GoogleLoginButton';
 import InputField from '../components/InputField';
 import colors from '../theme/colors';
 import tokens from '../theme/tokens';
+
+const NativeGoogleLoginButton =
+  Platform.OS === 'web' ? null : require('../components/GoogleLoginButton.native').default;
 
 export default function LoginScreen({ navigation, onLogin }) {
   const passwordRef = useRef(null);
@@ -137,7 +139,16 @@ export default function LoginScreen({ navigation, onLogin }) {
           </View>
 
           <View style={styles.googleBlock}>
-            <GoogleLoginButton onLogin={onLogin} onError={setGoogleError} />
+            {Platform.OS === 'web' ? (
+              <>
+                <ActionButton title="Continue with Google" variant="secondary" disabled />
+                <Text style={styles.googleHint}>
+                  Google sign-in is disabled in the web preview so the interface can render safely.
+                </Text>
+              </>
+            ) : (
+              <NativeGoogleLoginButton onLogin={onLogin} onError={setGoogleError} />
+            )}
             {googleError ? <Text style={styles.googleError}>{googleError}</Text> : null}
           </View>
 
@@ -260,6 +271,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: tokens.type.caption,
     color: '#D24D57',
+    textAlign: 'center',
+  },
+  googleHint: {
+    marginTop: 10,
+    fontSize: tokens.type.caption,
+    color: colors.textSoft,
     textAlign: 'center',
   },
   footer: {
