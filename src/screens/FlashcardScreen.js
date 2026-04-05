@@ -11,6 +11,14 @@ function createDefaultOrder(length) {
   return Array.from({ length }, (_, index) => index);
 }
 
+function sanitizeSearchQuery(text) {
+  return String(text ?? '')
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80);
+}
+
 function createShuffledOrder(length, pinnedIndex) {
   const remainingIndexes = createDefaultOrder(length).filter((index) => index !== pinnedIndex);
 
@@ -25,7 +33,7 @@ function createShuffledOrder(length, pinnedIndex) {
   return [pinnedIndex, ...remainingIndexes];
 }
 
-export default function FlashcardScreen() {
+export default function FlashcardScreen({ navigation }) {
   const {
     flashcards,
     markCardKnown,
@@ -33,6 +41,11 @@ export default function FlashcardScreen() {
     mistakeCardIds,
     clearMistakeCard,
     toggleFavoriteCard,
+    changeLevel,
+    changePartOfSpeech,
+    changeStudyMode,
+    clearSearchQuery,
+    rememberStudyScreen,
     selectedPartOfSpeech,
     selectedStudyMode,
   } = useFlashcards();
@@ -75,6 +88,10 @@ export default function FlashcardScreen() {
     () => `${currentIndex + 1} / ${cardOrder.length}`,
     [cardOrder.length, currentIndex]
   );
+
+  useEffect(() => {
+    rememberStudyScreen('Flashcards');
+  }, []);
 
   useEffect(() => {
     const currentCardId = currentCard?.id;
@@ -159,12 +176,24 @@ export default function FlashcardScreen() {
     speakText(currentCard.korean, 'ko-KR');
   };
 
+  const handleShowAllCards = () => {
+    clearSearchQuery();
+    changeStudyMode('All Cards');
+    changeLevel('All');
+    changePartOfSpeech('All');
+    setSearchQuery('');
+  };
+
   if (!flashcards.length) {
     return (
       <ScreenContainer>
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>No cards match this filter yet</Text>
           <Text style={styles.emptyText}>Try a different level or word type from the home screen.</Text>
+          <View style={styles.emptyActions}>
+            <PrimaryButton title="Show All Cards" onPress={handleShowAllCards} />
+            <PrimaryButton title="Back Home" variant="secondary" onPress={() => navigation.navigate('Home')} />
+          </View>
         </View>
       </ScreenContainer>
     );
@@ -178,10 +207,11 @@ export default function FlashcardScreen() {
           <View style={styles.searchInputWrap}>
             <TextInput
               value={searchQuery}
-              onChangeText={setSearchQuery}
+              onChangeText={(value) => setSearchQuery(sanitizeSearchQuery(value))}
               placeholder="Try Korean, English, or word type"
               placeholderTextColor={colors.textSoft}
               style={styles.searchInput}
+              maxLength={80}
             />
             <Pressable onPress={() => setSearchQuery('')} style={styles.clearButton}>
               <Text style={styles.clearLabel}>Clear</Text>
@@ -192,6 +222,10 @@ export default function FlashcardScreen() {
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>No cards matched that search</Text>
           <Text style={styles.emptyText}>Try a shorter word or clear the search to keep studying.</Text>
+          <View style={styles.emptyActions}>
+            <PrimaryButton title="Clear Search" onPress={() => setSearchQuery('')} />
+            <PrimaryButton title="Show All Cards" variant="secondary" onPress={handleShowAllCards} />
+          </View>
         </View>
       </ScreenContainer>
     );
@@ -204,10 +238,11 @@ export default function FlashcardScreen() {
         <View style={styles.searchInputWrap}>
           <TextInput
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={(value) => setSearchQuery(sanitizeSearchQuery(value))}
             placeholder="Try Korean, English, or word type"
             placeholderTextColor={colors.textSoft}
             style={styles.searchInput}
+            maxLength={80}
           />
           {searchQuery ? (
             <Pressable onPress={() => setSearchQuery('')} style={styles.clearButton}>
@@ -612,6 +647,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+  },
+  emptyActions: {
+    width: '100%',
+    marginTop: 18,
   },
   emptyTitle: {
     fontSize: 24,

@@ -1,15 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { flashcards, levels, partsOfSpeech } from '../data/flashcards';
 
 const FlashcardContext = createContext(null);
 const STORAGE_KEY = 'flashcard-progress';
 const DEFAULT_DAILY_GOAL = 5;
 const DEFAULT_GOAL_TARGET = 20;
+const MAX_SEARCH_QUERY_LENGTH = 80;
 const quizDifficulties = ['Easy', 'Medium', 'Hard'];
 const quizScopes = ['Current Filters', 'Word Type Only'];
 const goalTargets = [10, 20, 30, 50];
 const studyModes = ['All Cards', 'Needs Review', 'Unlearned', 'Bookmarked'];
+const streakMilestones = [3, 7, 14, 30];
 
 function getTodayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -39,6 +41,14 @@ function calculateStreak(activityByDate) {
 
 function normalizeText(text) {
   return String(text ?? '').trim().toLowerCase();
+}
+
+function sanitizeSearchQuery(text) {
+  return String(text ?? '')
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, MAX_SEARCH_QUERY_LENGTH);
 }
 
 function matchesSearch(card, query) {
@@ -117,8 +127,15 @@ export function FlashcardProvider({ children }) {
   const [selectedGoalTarget, setSelectedGoalTarget] = useState(DEFAULT_GOAL_TARGET);
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [showOnboardingTip, setShowOnboardingTip] = useState(true);
+  const [lastStudyScreen, setLastStudyScreen] = useState('Flashcards');
+  const [celebration, setCelebration] = useState(null);
   const [activityByDate, setActivityByDate] = useState({});
   const [isHydrated, setIsHydrated] = useState(false);
+  const previousMilestonesRef = useRef({
+    todayProgress: 0,
+    knownCount: 0,
+    streakCount: 0,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -173,7 +190,7 @@ export function FlashcardProvider({ children }) {
         }
 
         if (typeof parsedProgress.searchQuery === 'string') {
-          setSearchQuery(parsedProgress.searchQuery);
+          setSearchQuery(sanitizeSearchQuery(parsedProgress.searchQuery));
         }
 
         if (
@@ -203,6 +220,10 @@ export function FlashcardProvider({ children }) {
 
         if (typeof parsedProgress.showOnboardingTip === 'boolean') {
           setShowOnboardingTip(parsedProgress.showOnboardingTip);
+        }
+
+        if (typeof parsedProgress.lastStudyScreen === 'string') {
+          setLastStudyScreen(parsedProgress.lastStudyScreen);
         }
 
         if (
@@ -252,6 +273,7 @@ export function FlashcardProvider({ children }) {
             selectedGoalTarget,
             reminderEnabled,
             showOnboardingTip,
+            lastStudyScreen,
             activityByDate,
           })
         );
@@ -278,6 +300,7 @@ export function FlashcardProvider({ children }) {
     selectedQuizScope,
     selectedStudyMode,
     showOnboardingTip,
+    lastStudyScreen,
   ]);
 
   const normalizedSearchQuery = normalizeText(searchQuery);
@@ -440,7 +463,7 @@ export function FlashcardProvider({ children }) {
   };
 
   const changeSearchQuery = (query) => {
-    setSearchQuery(query);
+    setSearchQuery(sanitizeSearchQuery(query));
   };
 
   const clearSearchQuery = () => {
@@ -471,11 +494,62 @@ export function FlashcardProvider({ children }) {
     setShowOnboardingTip(true);
   };
 
+  const rememberStudyScreen = (screenName) => {
+    setLastStudyScreen(screenName);
+  };
+
+  const dismissCelebration = () => {
+    setCelebration(null);
+  };
+
   const todayKey = getTodayKey();
   const todayProgress = activityByDate[todayKey] ?? 0;
   const dailyGoalProgress = Math.min(todayProgress, dailyGoal);
   const streakCount = calculateStreak(activityByDate);
   const isDailyGoalComplete = todayProgress >= dailyGoal;
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    const previousMilestones = previousMilestonesRef.current;
+
+    if (previousMilestones.todayProgress < dailyGoal && todayProgress >= dailyGoal) {
+      setCelebration({
+        id: `daily-goal-${todayKey}`,
+        title: 'Daily goal complete',
+        message: "Nice work. You reached today's study goal.",
+      });
+    } else if (
+      previousMilestones.knownCount < selectedGoalTarget &&
+      knownCardIds.length >= selectedGoalTarget
+    ) {
+      setCelebration({
+        id: `goal-${selectedGoalTarget}`,
+        title: 'Goal milestone reached',
+        message: `You hit your ${selectedGoalTarget}-word milestone. That is real progress.`,
+      });
+    } else {
+      const reachedStreakMilestone = streakMilestones.find(
+        (milestone) => previousMilestones.streakCount < milestone && streakCount >= milestone
+      );
+
+      if (reachedStreakMilestone) {
+        setCelebration({
+          id: `streak-${reachedStreakMilestone}`,
+          title: 'Streak milestone',
+          message: `You made it to a ${reachedStreakMilestone}-day streak. Keep it warm tomorrow.`,
+        });
+      }
+    }
+
+    previousMilestonesRef.current = {
+      todayProgress,
+      knownCount: knownCardIds.length,
+      streakCount,
+    };
+  }, [dailyGoal, isHydrated, knownCardIds.length, selectedGoalTarget, streakCount, todayKey, todayProgress]);
 
   const value = useMemo(
     () => ({
@@ -500,6 +574,8 @@ export function FlashcardProvider({ children }) {
       isGoalComplete,
       reminderEnabled,
       showOnboardingTip,
+      lastStudyScreen,
+      celebration,
       knownCardIds,
       favoriteCardIds,
       favoriteCount,
@@ -530,6 +606,8 @@ export function FlashcardProvider({ children }) {
       changeReminderEnabled,
       dismissOnboardingTip,
       showOnboardingAgain,
+      rememberStudyScreen,
+      dismissCelebration,
     }),
     [
       dailyGoal,
@@ -560,6 +638,8 @@ export function FlashcardProvider({ children }) {
       streakCount,
       todayProgress,
       cardStatsById,
+      lastStudyScreen,
+      celebration,
     ]
   );
 

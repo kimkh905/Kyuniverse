@@ -21,11 +21,16 @@ function shuffleItems(items) {
   return shuffledItems;
 }
 
-export default function QuizScreen() {
+export default function QuizScreen({ navigation }) {
   const {
     quizFlashcards,
     saveQuizResult,
     mistakeCount,
+    changeLevel,
+    changePartOfSpeech,
+    changeStudyMode,
+    clearSearchQuery,
+    rememberStudyScreen,
     selectedQuizDifficulty,
     selectedPartOfSpeech,
     selectedQuizScope,
@@ -71,6 +76,10 @@ export default function QuizScreen() {
     setFeedback('');
     setSessionResults([]);
   }, [quizFlashcards, selectedQuizDifficulty, selectedQuizScope]);
+
+  useEffect(() => {
+    rememberStudyScreen('Quiz');
+  }, []);
 
   useEffect(() => {
     fadeAnim.setValue(0);
@@ -128,6 +137,13 @@ export default function QuizScreen() {
     speakText(currentCard.english, 'en-US');
   };
 
+  const handleShowAllCards = () => {
+    clearSearchQuery();
+    changeStudyMode('All Cards');
+    changeLevel('All');
+    changePartOfSpeech('All');
+  };
+
   const sessionCorrectCount = sessionResults.filter(Boolean).length;
   const sessionAccuracy = sessionResults.length
     ? Math.round((sessionCorrectCount / sessionResults.length) * 100)
@@ -139,6 +155,10 @@ export default function QuizScreen() {
         <View style={styles.centered}>
           <Text style={styles.title}>No quiz cards match this filter yet</Text>
           <Text style={styles.summaryNote}>Try a different level or word type from the home screen.</Text>
+          <View style={styles.summaryActions}>
+            <PrimaryButton title="Show All Cards" onPress={handleShowAllCards} />
+            <PrimaryButton title="Back Home" variant="secondary" onPress={() => navigation.navigate('Home')} />
+          </View>
         </View>
       </ScreenContainer>
     );

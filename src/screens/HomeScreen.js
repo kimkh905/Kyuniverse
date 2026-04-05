@@ -33,6 +33,8 @@ export default function HomeScreen({ navigation }) {
     changeSearchQuery,
     clearSearchQuery,
     mistakeCount,
+    lastStudyScreen,
+    rememberStudyScreen,
     quizDifficulties,
     selectedQuizDifficulty,
     changeQuizDifficulty,
@@ -83,11 +85,28 @@ export default function HomeScreen({ navigation }) {
 
   const handleOpenReviewFlashcards = () => {
     changeStudyMode('Needs Review');
+    rememberStudyScreen('Flashcards');
     navigation.navigate('Flashcards');
   };
 
   const handleOpenReviewQuiz = () => {
     changeStudyMode('Needs Review');
+    rememberStudyScreen('Quiz');
+    navigation.navigate('Quiz');
+  };
+
+  const handleContinueLearning = () => {
+    rememberStudyScreen(lastStudyScreen);
+    navigation.navigate(lastStudyScreen);
+  };
+
+  const handleOpenFlashcards = () => {
+    rememberStudyScreen('Flashcards');
+    navigation.navigate('Flashcards');
+  };
+
+  const handleOpenQuiz = () => {
+    rememberStudyScreen('Quiz');
     navigation.navigate('Quiz');
   };
 
@@ -152,6 +171,7 @@ export default function HomeScreen({ navigation }) {
               placeholder="Search by Korean, English, level, or word type"
               placeholderTextColor={colors.textSoft}
               style={styles.searchInput}
+              maxLength={80}
             />
             {searchQuery ? (
               <Pressable
@@ -166,6 +186,19 @@ export default function HomeScreen({ navigation }) {
             {flashcards.length} cards match your current filters.
           </Text>
         </View>
+
+        <Pressable
+          style={({ pressed }) => [styles.continueCard, pressed && styles.levelChipPressed]}
+          onPress={handleContinueLearning}
+        >
+          <Text style={styles.continueEyebrow}>Continue learning</Text>
+          <Text style={styles.continueTitle}>
+            Jump back into {lastStudyScreen === 'Quiz' ? 'quiz mode' : 'flashcards'}
+          </Text>
+          <Text style={styles.continueText}>
+            Pick up where your last study session left off and keep the momentum going.
+          </Text>
+        </Pressable>
 
         <View style={styles.heroPanel}>
           <View style={[styles.statBubble, styles.statBubbleWarm]}>
@@ -428,7 +461,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.gameBoard}>
           <Pressable
             style={[styles.featureCard, styles.featurePrimary]}
-            onPress={() => navigation.navigate('Flashcards')}
+            onPress={handleOpenFlashcards}
           >
             <Text style={styles.featureEyebrow}>Warm-up</Text>
             <Text style={styles.featureTitle}>Start Flashcards</Text>
@@ -442,7 +475,7 @@ export default function HomeScreen({ navigation }) {
           </Pressable>
           <Pressable
             style={[styles.featureCard, styles.featureSecondary]}
-            onPress={() => navigation.navigate('Quiz')}
+            onPress={handleOpenQuiz}
           >
             <Text style={styles.featureEyebrow}>Challenge</Text>
             <Text style={styles.featureTitle}>Take Quiz</Text>
@@ -503,6 +536,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginBottom: 22,
+  },
+  continueCard: {
+    backgroundColor: '#efe6ff',
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 22,
+  },
+  continueEyebrow: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#5e47a5',
+    marginBottom: 6,
+  },
+  continueTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 6,
+  },
+  continueText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSoft,
   },
   onboardingCard: {
     backgroundColor: '#fff1dc',

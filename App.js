@@ -2,6 +2,7 @@ import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import CelebrationBanner from './src/components/CelebrationBanner';
 import { FlashcardProvider } from './src/context/FlashcardContext';
 import { useFlashcards } from './src/context/FlashcardContext';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -9,7 +10,7 @@ import colors from './src/theme/colors';
 import { configureNotifications } from './src/utils/notifications';
 
 function AppContent() {
-  const { isHydrated } = useFlashcards();
+  const { isHydrated, celebration, dismissCelebration } = useFlashcards();
 
   useEffect(() => {
     configureNotifications();
@@ -23,7 +24,12 @@ function AppContent() {
     );
   }
 
-  return <AppNavigator />;
+  return (
+    <View style={styles.appShell}>
+      <AppNavigator />
+      <CelebrationBanner celebration={celebration} onDismiss={dismissCelebration} />
+    </View>
+  );
 }
 
 export default function App() {
@@ -41,5 +47,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.background,
+  },
+  appShell: {
+    flex: 1,
   },
 });
