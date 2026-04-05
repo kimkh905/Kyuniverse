@@ -11,7 +11,7 @@ import {
   sendTestNotification,
 } from '../utils/notifications';
 
-export default function GoalsScreen() {
+export default function GoalsScreen({ navigation }) {
   const {
     knownCardIds,
     goalTargets,
@@ -139,6 +139,11 @@ export default function GoalsScreen() {
         onPress={handleEnableReminder}
       />
       <PrimaryButton title="Test Notification Now" onPress={handleTestReminder} />
+      <PrimaryButton
+        title="Privacy & Data"
+        variant="secondary"
+        onPress={() => navigation.navigate('Privacy')}
+      />
       <PrimaryButton
         title="Turn Off Reminder"
         variant="secondary"

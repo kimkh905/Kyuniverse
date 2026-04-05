@@ -125,6 +125,11 @@ export default function ProgressScreen({ navigation }) {
       </View>
 
       <PrimaryButton title="Reset Progress" variant="secondary" onPress={resetProgress} />
+      <PrimaryButton
+        title="Privacy & Data"
+        variant="secondary"
+        onPress={() => navigation.navigate('Privacy')}
+      />
     </ScreenContainer>
   );
 }
