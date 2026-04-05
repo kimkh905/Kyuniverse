@@ -4,17 +4,23 @@ import { Platform } from 'react-native';
 const DAILY_REMINDER_HOUR = 20;
 const DAILY_REMINDER_MINUTE = 0;
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 export async function configureNotifications() {
+  if (Platform.OS === 'web') {
+    return;
+  }
+
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('daily-reminders', {
       name: 'Daily reminders',
@@ -24,6 +30,10 @@ export async function configureNotifications() {
 }
 
 export async function enableDailyReminder(goalTarget) {
+  if (Platform.OS === 'web') {
+    return { granted: false, reason: 'web-not-supported' };
+  }
+
   const permissions = await Notifications.getPermissionsAsync();
   let finalStatus = permissions.status;
 
@@ -56,10 +66,18 @@ export async function enableDailyReminder(goalTarget) {
 }
 
 export async function disableDailyReminder() {
+  if (Platform.OS === 'web') {
+    return;
+  }
+
   await Notifications.cancelAllScheduledNotificationsAsync();
 }
 
 export async function sendTestNotification(goalTarget) {
+  if (Platform.OS === 'web') {
+    return { granted: false, reason: 'web-not-supported' };
+  }
+
   const permissions = await Notifications.getPermissionsAsync();
   let finalStatus = permissions.status;
 

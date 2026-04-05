@@ -1,7 +1,6 @@
-import 'expo-dev-client';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import CelebrationBanner from './src/components/CelebrationBanner';
 import { FlashcardProvider } from './src/context/FlashcardContext';
 import { useFlashcards } from './src/context/FlashcardContext';
@@ -15,7 +14,9 @@ function AppContent() {
   const [pendingVerification, setPendingVerification] = useState(null);
 
   useEffect(() => {
-    configureNotifications();
+    if (Platform.OS !== 'web') {
+      configureNotifications();
+    }
   }, []);
 
   const handleLogin = (user) => {
