@@ -1,7 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -12,104 +10,10 @@ import {
 } from 'react-native';
 import ActionButton from '../components/ActionButton';
 import AppShell from '../components/AppShell';
+import GoogleLoginButton from '../components/GoogleLoginButton';
 import InputField from '../components/InputField';
 import colors from '../theme/colors';
 import tokens from '../theme/tokens';
-
-WebBrowser.maybeCompleteAuthSession();
-
-const googleConfig = {
-  expoClientId: process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID,
-  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-};
-
-const hasGoogleConfig = Object.values(googleConfig).some(Boolean);
-
-function GoogleLoginButton({ onLogin, onError }) {
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [, response, promptAsync] = Google.useAuthRequest({
-    ...googleConfig,
-    scopes: ['openid', 'profile', 'email'],
-    selectAccount: true,
-  });
-
-  useEffect(() => {
-    const handleGoogleResponse = async () => {
-      if (!response) {
-        return;
-      }
-
-      if (response.type !== 'success') {
-        setIsGoogleLoading(false);
-        if (response.type === 'error') {
-          onError('Google sign-in did not complete. Please try again.');
-        }
-        return;
-      }
-
-      const accessToken = response.authentication?.accessToken;
-
-      if (!accessToken) {
-        onError('Google sign-in finished, but no profile token was returned.');
-        setIsGoogleLoading(false);
-        return;
-      }
-
-      try {
-        const profileResponse = await fetch('https://www.googleapis.com/userinfo/v2/me', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        if (!profileResponse.ok) {
-          throw new Error('Could not load your Google profile.');
-        }
-
-        const profile = await profileResponse.json();
-
-        onLogin({
-          provider: 'google',
-          username: profile.name || profile.email || 'Google Member',
-          email: profile.email || '',
-          rememberMe: true,
-        });
-      } catch (error) {
-        onError(error.message || 'Google sign-in did not complete.');
-      } finally {
-        setIsGoogleLoading(false);
-      }
-    };
-
-    handleGoogleResponse();
-  }, [onError, onLogin, response]);
-
-  const handleGoogleLogin = async () => {
-    onError('');
-    setIsGoogleLoading(true);
-
-    try {
-      await promptAsync();
-    } catch (error) {
-      onError(error.message || 'Google sign-in could not start.');
-      setIsGoogleLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <ActionButton
-        title={isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google'}
-        onPress={handleGoogleLogin}
-        variant="secondary"
-        disabled={isGoogleLoading}
-      />
-      <Text style={styles.googleHint}>Google sign-in uses your configured Expo OAuth client IDs.</Text>
-    </>
-  );
-}
 
 export default function LoginScreen({ navigation, onLogin }) {
   const passwordRef = useRef(null);
@@ -233,18 +137,7 @@ export default function LoginScreen({ navigation, onLogin }) {
           </View>
 
           <View style={styles.googleBlock}>
-            {hasGoogleConfig && Platform.OS !== 'web' ? (
-              <GoogleLoginButton onLogin={onLogin} onError={setGoogleError} />
-            ) : (
-              <>
-                <ActionButton title="Continue with Google" variant="secondary" disabled />
-                <Text style={styles.googleHint}>
-                  {Platform.OS === 'web'
-                    ? 'Google sign-in is disabled in the web preview so the interface can render safely.'
-                    : 'Add your EXPO_PUBLIC_GOOGLE client IDs to enable Google sign-in.'}
-                </Text>
-              </>
-            )}
+            <GoogleLoginButton onLogin={onLogin} onError={setGoogleError} />
             {googleError ? <Text style={styles.googleError}>{googleError}</Text> : null}
           </View>
 
@@ -362,12 +255,6 @@ const styles = StyleSheet.create({
   },
   googleBlock: {
     marginBottom: tokens.spacing.xl,
-  },
-  googleHint: {
-    marginTop: 10,
-    fontSize: tokens.type.caption,
-    color: colors.textSoft,
-    textAlign: 'center',
   },
   googleError: {
     marginTop: 10,
