@@ -32,6 +32,7 @@ export default function HomeScreen({ navigation }) {
     searchQuery,
     changeSearchQuery,
     clearSearchQuery,
+    mistakeCount,
     quizDifficulties,
     selectedQuizDifficulty,
     changeQuizDifficulty,
@@ -76,6 +77,16 @@ export default function HomeScreen({ navigation }) {
       }),
     ]).start();
   }, [fadeAnim, slideAnim]);
+
+  const handleOpenReviewFlashcards = () => {
+    changeStudyMode('Needs Review');
+    navigation.navigate('Flashcards');
+  };
+
+  const handleOpenReviewQuiz = () => {
+    changeStudyMode('Needs Review');
+    navigation.navigate('Quiz');
+  };
 
   return (
     <ScreenContainer>
@@ -200,6 +211,30 @@ export default function HomeScreen({ navigation }) {
           <View style={[styles.goalCard, styles.goalCardYellow]}>
             <Text style={styles.goalValue}>{streakCount}</Text>
             <Text style={styles.goalLabel}>Day streak</Text>
+          </View>
+        </View>
+
+        <View style={styles.reviewCard}>
+          <Text style={styles.reviewEyebrow}>Needs review</Text>
+          <Text style={styles.reviewValue}>{mistakeCount}</Text>
+          <Text style={styles.reviewText}>
+            {mistakeCount
+              ? 'These words tripped you up recently. A quick review round will help them stick.'
+              : 'You are all caught up right now. Keep going and new review words will appear here.'}
+          </Text>
+          <View style={styles.reviewActions}>
+            <Pressable
+              style={({ pressed }) => [styles.reviewButtonSecondary, pressed && styles.levelChipPressed]}
+              onPress={handleOpenReviewFlashcards}
+            >
+              <Text style={styles.reviewButtonSecondaryLabel}>Review Cards</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.reviewButtonPrimary, pressed && styles.levelChipPressed]}
+              onPress={handleOpenReviewQuiz}
+            >
+              <Text style={styles.reviewButtonPrimaryLabel}>Review Quiz</Text>
+            </Pressable>
           </View>
         </View>
 
@@ -637,6 +672,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: colors.textSoft,
+  },
+  reviewCard: {
+    backgroundColor: '#e8f4ff',
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 22,
+  },
+  reviewEyebrow: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#215a92',
+    marginBottom: 6,
+  },
+  reviewValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 6,
+  },
+  reviewText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSoft,
+  },
+  reviewActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 16,
+  },
+  reviewButtonPrimary: {
+    flex: 1,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  reviewButtonPrimaryLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  reviewButtonSecondary: {
+    flex: 1,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  reviewButtonSecondaryLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
   },
   goalFocusCard: {
     backgroundColor: '#e7f7f0',
