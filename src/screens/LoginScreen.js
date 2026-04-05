@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRef, useState } from 'react';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -14,12 +16,95 @@ import InputField from '../components/InputField';
 import colors from '../theme/colors';
 import tokens from '../theme/tokens';
 
-export default function LoginScreen({ onLogin }) {
+WebBrowser.maybeCompleteAuthSession();
+
+const googleConfig = {
+  expoClientId: process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID,
+  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+};
+
+const hasGoogleConfig = Object.values(googleConfig).some(Boolean);
+
+export default function LoginScreen({ navigation, onLogin }) {
   const passwordRef = useRef(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
+  const [googleError, setGoogleError] = useState('');
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const [, response, promptAsync] = Google.useAuthRequest({
+    ...googleConfig,
+    scopes: ['openid', 'profile', 'email'],
+    selectAccount: true,
+  });
+
+  useEffect(() => {
+    const handleGoogleResponse = async () => {
+      if (!response) {
+        return;
+      }
+
+      if (response.type !== 'success') {
+        setIsGoogleLoading(false);
+        if (response.type === 'error') {
+          setGoogleError('Google sign-in did not complete. Please try again.');
+        }
+        return;
+      }
+
+      const accessToken = response.authentication?.accessToken;
+
+      if (!accessToken) {
+        setGoogleError('Google sign-in finished, but no profile token was returned.');
+        setIsGoogleLoading(false);
+        return;
+      }
+
+      try {
+        const profileResponse = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!profileResponse.ok) {
+          throw new Error('Could not load your Google profile.');
+        }
+
+        const profile = await profileResponse.json();
+
+        onLogin({
+          provider: 'google',
+          username: profile.name || profile.email || 'Google Member',
+          email: profile.email || '',
+          rememberMe: true,
+        });
+      } catch (error) {
+        setGoogleError(error.message || 'Google sign-in did not complete.');
+      } finally {
+        setIsGoogleLoading(false);
+      }
+    };
+
+    handleGoogleResponse();
+  }, [onLogin, response]);
+
+  const clearFieldError = (field) => {
+    setErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [field]: undefined,
+      };
+    });
+  };
 
   const handleSubmit = () => {
     const trimmedUsername = username.trim();
@@ -41,9 +126,29 @@ export default function LoginScreen({ onLogin }) {
     }
 
     onLogin({
+      provider: 'local',
       username: trimmedUsername,
+      email: '',
       rememberMe,
     });
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleError('');
+
+    if (!hasGoogleConfig) {
+      setGoogleError('Add your EXPO_PUBLIC_GOOGLE client IDs to enable Google sign-in.');
+      return;
+    }
+
+    setIsGoogleLoading(true);
+
+    try {
+      await promptAsync();
+    } catch (error) {
+      setGoogleError(error.message || 'Google sign-in could not start.');
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -61,6 +166,9 @@ export default function LoginScreen({ onLogin }) {
           </View>
 
           <Text style={styles.title}>Member Login</Text>
+          <Text style={styles.subtitle}>
+            Welcome back. Sign in to keep building toward your learning goals.
+          </Text>
 
           <InputField
             icon="person-outline"
@@ -68,12 +176,13 @@ export default function LoginScreen({ onLogin }) {
             value={username}
             onChangeText={(text) => {
               setUsername(text);
-              if (errors.username) {
-                setErrors((current) => ({ ...current, username: undefined }));
-              }
+              clearFieldError('username');
             }}
             onSubmitEditing={() => passwordRef.current?.focus()}
             returnKeyType="next"
+            autoCapitalize="none"
+            autoComplete="username"
+            textContentType="username"
             error={errors.username}
           />
 
@@ -83,14 +192,15 @@ export default function LoginScreen({ onLogin }) {
             value={password}
             onChangeText={(text) => {
               setPassword(text);
-              if (errors.password) {
-                setErrors((current) => ({ ...current, password: undefined }));
-              }
+              clearFieldError('password');
             }}
             secureTextEntry
             onSubmitEditing={handleSubmit}
             returnKeyType="done"
             inputRef={passwordRef}
+            autoCapitalize="none"
+            autoComplete="password"
+            textContentType="password"
             error={errors.password}
           />
 
@@ -114,9 +224,25 @@ export default function LoginScreen({ onLogin }) {
             <ActionButton title="Login" onPress={handleSubmit} />
           </View>
 
+          <View style={styles.googleBlock}>
+            <ActionButton
+              title={isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google'}
+              onPress={handleGoogleLogin}
+              variant="secondary"
+              disabled={isGoogleLoading}
+            />
+            {googleError ? <Text style={styles.googleError}>{googleError}</Text> : null}
+            {!googleError && hasGoogleConfig ? (
+              <Text style={styles.googleHint}>Google sign-in uses your configured Expo OAuth client IDs.</Text>
+            ) : null}
+          </View>
+
           <View style={styles.footer}>
             <Text style={styles.footerText}>Not a member?</Text>
-            <Pressable style={({ pressed }) => [pressed && styles.pressed]}>
+            <Pressable
+              style={({ pressed }) => [pressed && styles.pressed]}
+              onPress={() => navigation.navigate('SignUp')}
+            >
               <Text style={styles.footerLink}>Create an account</Text>
             </Pressable>
           </View>
@@ -176,6 +302,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.text,
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: tokens.type.body,
+    lineHeight: 22,
+    color: colors.textSoft,
+    textAlign: 'center',
     marginBottom: tokens.spacing.xl,
   },
   optionsRow: {
@@ -214,7 +347,22 @@ const styles = StyleSheet.create({
     color: colors.primaryDark,
   },
   buttonWrap: {
+    marginBottom: tokens.spacing.md,
+  },
+  googleBlock: {
     marginBottom: tokens.spacing.xl,
+  },
+  googleHint: {
+    marginTop: 10,
+    fontSize: tokens.type.caption,
+    color: colors.textSoft,
+    textAlign: 'center',
+  },
+  googleError: {
+    marginTop: 10,
+    fontSize: tokens.type.caption,
+    color: '#D24D57',
+    textAlign: 'center',
   },
   footer: {
     alignItems: 'center',

@@ -10,15 +10,27 @@ import PrivacyScreen from '../screens/PrivacyScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 import QuizScreen from '../screens/QuizScreen';
+import SignUpScreen from '../screens/SignUpScreen';
+import VerifyEmailScreen from '../screens/VerifyEmailScreen';
 import colors from '../theme/colors';
 
 const Stack = createNativeStackNavigator();
 
-export default function AppNavigator({ isAuthenticated, onLogin, onLogout }) {
+export default function AppNavigator({
+  isAuthenticated,
+  currentUser,
+  pendingVerification,
+  onLogin,
+  onLogout,
+  onCreateAccount,
+  onVerifyEmail,
+  onResendVerification,
+  onCancelVerification,
+}) {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={isAuthenticated ? 'Home' : 'Login'}
+        initialRouteName={isAuthenticated ? 'Home' : pendingVerification ? 'VerifyEmail' : 'Login'}
         screenOptions={{
           headerTitleAlign: 'center',
           contentStyle: { backgroundColor: colors.background },
@@ -32,13 +44,29 @@ export default function AppNavigator({ isAuthenticated, onLogin, onLogout }) {
         }}
       >
         {!isAuthenticated ? (
-          <Stack.Screen name="Login" options={{ headerShown: false }}>
-            {(props) => <LoginScreen {...props} onLogin={onLogin} />}
-          </Stack.Screen>
+          <>
+            <Stack.Screen name="Login" options={{ headerShown: false }}>
+              {(props) => <LoginScreen {...props} onLogin={onLogin} />}
+            </Stack.Screen>
+            <Stack.Screen name="SignUp" options={{ headerShown: false }}>
+              {(props) => <SignUpScreen {...props} onCreateAccount={onCreateAccount} />}
+            </Stack.Screen>
+            <Stack.Screen name="VerifyEmail" options={{ headerShown: false }}>
+              {(props) => (
+                <VerifyEmailScreen
+                  {...props}
+                  pendingVerification={pendingVerification}
+                  onVerifyEmail={onVerifyEmail}
+                  onResendVerification={onResendVerification}
+                  onCancelVerification={onCancelVerification}
+                />
+              )}
+            </Stack.Screen>
+          </>
         ) : (
           <>
             <Stack.Screen name="Home" options={{ headerShown: false }}>
-              {(props) => <HomeScreen {...props} onLogout={onLogout} />}
+              {(props) => <HomeScreen {...props} onLogout={onLogout} currentUser={currentUser} />}
             </Stack.Screen>
             <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Leaderboard" component={LeaderboardScreen} options={{ headerShown: false }} />

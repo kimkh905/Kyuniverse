@@ -15,7 +15,7 @@ const classAuthors = {
   Travel: { name: 'Hana Lee', role: 'Travel phrases' },
 };
 
-export default function HomeScreen({ navigation, onLogout }) {
+export default function HomeScreen({ navigation, onLogout, currentUser }) {
   const { allFlashcards, levels, knownCardIds, rememberStudyScreen } = useFlashcards();
 
   const classCards = levels
@@ -67,6 +67,9 @@ export default function HomeScreen({ navigation, onLogout }) {
         </View>
       </View>
 
+      <Text style={styles.eyebrow}>
+        {currentUser?.name ? `Welcome back, ${currentUser.name}` : 'Welcome back'}
+      </Text>
       <Text style={styles.title}>Dashboard</Text>
 
       <View style={styles.statsRow}>
@@ -131,6 +134,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.text,
     marginBottom: tokens.spacing.lg,
+  },
+  eyebrow: {
+    fontSize: tokens.type.caption,
+    fontWeight: '700',
+    color: colors.primaryDark,
+    marginBottom: 6,
   },
   statsRow: {
     flexDirection: 'row',

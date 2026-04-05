@@ -11,18 +11,76 @@ import { configureNotifications } from './src/utils/notifications';
 
 function AppContent() {
   const { isHydrated, celebration, dismissCelebration } = useFlashcards();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [pendingVerification, setPendingVerification] = useState(null);
 
   useEffect(() => {
     configureNotifications();
   }, []);
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
+  const handleLogin = (user) => {
+    setCurrentUser({
+      name: user?.username || user?.name || 'Member',
+      email: user?.email || '',
+      provider: user?.provider || 'local',
+      rememberMe: Boolean(user?.rememberMe),
+    });
+    setPendingVerification(null);
   };
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
+
+  const handleCreateAccount = (account) => {
+    const nextCode = String(Math.floor(100000 + Math.random() * 900000));
+
+    setPendingVerification({
+      name: account.name,
+      email: account.email,
+      password: account.password,
+      code: nextCode,
+    });
+  };
+
+  const handleVerifyEmail = (code) => {
+    if (!pendingVerification) {
+      return false;
+    }
+
+    if (pendingVerification.code !== code) {
+      return false;
+    }
+
+    setCurrentUser({
+      name: pendingVerification.name,
+      email: pendingVerification.email,
+      provider: 'email',
+      rememberMe: true,
+    });
+    setPendingVerification(null);
+    return true;
+  };
+
+  const handleResendVerification = () => {
+    if (!pendingVerification) {
+      return '';
+    }
+
+    const nextCode = String(Math.floor(100000 + Math.random() * 900000));
+    setPendingVerification((current) =>
+      current
+        ? {
+            ...current,
+            code: nextCode,
+          }
+        : current
+    );
+    return nextCode;
+  };
+
+  const handleCancelVerification = () => {
+    setPendingVerification(null);
   };
 
   if (!isHydrated) {
@@ -36,9 +94,15 @@ function AppContent() {
   return (
     <View style={styles.appShell}>
       <AppNavigator
-        isAuthenticated={isAuthenticated}
+        isAuthenticated={Boolean(currentUser)}
+        currentUser={currentUser}
+        pendingVerification={pendingVerification}
         onLogin={handleLogin}
         onLogout={handleLogout}
+        onCreateAccount={handleCreateAccount}
+        onVerifyEmail={handleVerifyEmail}
+        onResendVerification={handleResendVerification}
+        onCancelVerification={handleCancelVerification}
       />
       <CelebrationBanner celebration={celebration} onDismiss={dismissCelebration} />
     </View>

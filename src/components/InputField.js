@@ -12,6 +12,13 @@ export default function InputField({
   onSubmitEditing,
   returnKeyType = 'next',
   inputRef,
+  keyboardType = 'default',
+  autoCapitalize = 'none',
+  autoCorrect = false,
+  autoComplete,
+  textContentType,
+  editable = true,
+  maxLength,
   error,
 }) {
   return (
@@ -28,8 +35,13 @@ export default function InputField({
           onSubmitEditing={onSubmitEditing}
           returnKeyType={returnKeyType}
           style={styles.input}
-          autoCapitalize="none"
-          autoCorrect={false}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
+          autoComplete={autoComplete}
+          textContentType={textContentType}
+          editable={editable}
+          maxLength={maxLength}
         />
       </View>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
