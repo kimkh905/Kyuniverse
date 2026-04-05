@@ -1,7 +1,7 @@
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { Platform, Text, StyleSheet } from 'react-native';
 import ActionButton from './ActionButton';
 import colors from '../theme/colors';
 import tokens from '../theme/tokens';
@@ -17,7 +17,16 @@ const googleConfig = {
 
 const hasGoogleConfig = Object.values(googleConfig).some(Boolean);
 
-export default function GoogleLoginButton({ onLogin, onError }) {
+function DisabledGoogleButton({ hint }) {
+  return (
+    <>
+      <ActionButton title="Continue with Google" variant="secondary" disabled />
+      <Text style={styles.hint}>{hint}</Text>
+    </>
+  );
+}
+
+function NativeGoogleLoginButton({ onLogin, onError }) {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const [, response, promptAsync] = Google.useAuthRequest({
@@ -106,6 +115,22 @@ export default function GoogleLoginButton({ onLogin, onError }) {
       <Text style={styles.hint}>Google sign-in uses your configured Expo OAuth client IDs.</Text>
     </>
   );
+}
+
+export default function GoogleLoginButton(props) {
+  if (Platform.OS === 'web') {
+    return (
+      <DisabledGoogleButton hint="Google sign-in is disabled in the web preview so the interface can render safely." />
+    );
+  }
+
+  if (!hasGoogleConfig) {
+    return (
+      <DisabledGoogleButton hint="Add your EXPO_PUBLIC_GOOGLE client IDs to enable Google sign-in." />
+    );
+  }
+
+  return <NativeGoogleLoginButton {...props} />;
 }
 
 const styles = StyleSheet.create({
