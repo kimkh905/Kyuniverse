@@ -14,16 +14,12 @@ import InputField from '../components/InputField';
 import colors from '../theme/colors';
 import tokens from '../theme/tokens';
 
-const NativeGoogleLoginButton =
-  Platform.OS === 'web' ? null : require('../components/GoogleLoginButton.native').default;
-
 export default function LoginScreen({ navigation, onLogin }) {
   const passwordRef = useRef(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
-  const [googleError, setGoogleError] = useState('');
 
   const clearFieldError = (field) => {
     setErrors((current) => {
@@ -139,17 +135,10 @@ export default function LoginScreen({ navigation, onLogin }) {
           </View>
 
           <View style={styles.googleBlock}>
-            {Platform.OS === 'web' ? (
-              <>
-                <ActionButton title="Continue with Google" variant="secondary" disabled />
-                <Text style={styles.googleHint}>
-                  Google sign-in is disabled in the web preview so the interface can render safely.
-                </Text>
-              </>
-            ) : (
-              <NativeGoogleLoginButton onLogin={onLogin} onError={setGoogleError} />
-            )}
-            {googleError ? <Text style={styles.googleError}>{googleError}</Text> : null}
+            <ActionButton title="Continue with Google" variant="secondary" disabled />
+            <Text style={styles.googleHint}>
+              Google sign-in is temporarily disabled in the preview build so the interface can render safely.
+            </Text>
           </View>
 
           <View style={styles.footer}>
@@ -266,12 +255,6 @@ const styles = StyleSheet.create({
   },
   googleBlock: {
     marginBottom: tokens.spacing.xl,
-  },
-  googleError: {
-    marginTop: 10,
-    fontSize: tokens.type.caption,
-    color: '#D24D57',
-    textAlign: 'center',
   },
   googleHint: {
     marginTop: 10,
