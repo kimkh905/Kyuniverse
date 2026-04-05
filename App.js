@@ -12,10 +12,17 @@ function AppContent() {
   const { isHydrated, celebration, dismissCelebration } = useFlashcards();
   const [currentUser, setCurrentUser] = useState(null);
   const [pendingVerification, setPendingVerification] = useState(null);
+  const [isClientReady, setIsClientReady] = useState(Platform.OS !== 'web');
 
   useEffect(() => {
     if (Platform.OS !== 'web') {
       configureNotifications();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      setIsClientReady(true);
     }
   }, []);
 
@@ -84,7 +91,7 @@ function AppContent() {
     setPendingVerification(null);
   };
 
-  if (!isHydrated) {
+  if (!isHydrated || !isClientReady) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
